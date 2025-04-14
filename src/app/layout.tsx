@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Barlow } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { ClerkProvider } from "@clerk/nextjs";
+
 
 const interFont = Inter({
   subsets: ["latin"]
@@ -24,9 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${interFont.className} ${barlowFont.variable}`}
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${interFont.className} ${barlowFont.variable}`}
       >
         <ThemeProvider
           attribute="class"
@@ -34,9 +37,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
