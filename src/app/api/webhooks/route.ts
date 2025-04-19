@@ -1,5 +1,5 @@
 import { verifyWebhook } from '@clerk/nextjs/webhooks'
-import { User } from '@prisma/client'
+import { User } from '../../../generated/client'
 import { clerkClient } from '@clerk/nextjs/server'
 import { db } from '../../../lib/db'
 
