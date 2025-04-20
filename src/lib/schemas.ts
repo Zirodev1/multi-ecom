@@ -13,7 +13,7 @@ export const CategoryFormSchema = z.object({
   }),
   image: z.object({
     url: z.string(),
-  }).array().length(1, "Choose only one category image"),
+  }).array().length(1, "Choose a category image"),
   url: z.string({
     required_error: "Category url is required.",
     invalid_type_error: "Category url must be a string.",
