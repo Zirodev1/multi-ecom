@@ -29,7 +29,7 @@ model Category {
   id       String  @id @default(uuid())
   name     String
   image    String
-  url      String
+  url      String @unique
   featured Boolean @default(false)
 
   createdAt DateTime @default(now())
