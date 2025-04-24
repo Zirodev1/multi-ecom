@@ -9,7 +9,7 @@ export const CategoryFormSchema = z.object({
   }).max(50, {
     message: "Category name cannot exceed 50 characters."
   }).regex(/^[a-zA-Z0-9\s'&-]+$/, {
-    message: "Only letters, numbers, and spaces are allowed in category name.",
+    message: "Only letters, numbers, and spaces are allowed in subcategory name.",
   }),
   image: z.object({
     url: z.string(),
@@ -22,7 +22,36 @@ export const CategoryFormSchema = z.object({
   }).max(50, {
     message: "Category url cannot exceed 50 characters."
   }).regex(/^(?!.*(?:[-_ ]){2,})[a-zA-Z0-9_-]+$/, {
-    message: "Only letters, numbers, hyphen and spaces are allowed in category url.",
+    message: "Only letters, numbers, hyphen and spaces are allowed in subcategory url.",
   }),
   featured: z.boolean().optional(),
+})
+
+
+export const SubCategoryFormSchema = z.object({
+  name: z.string({
+    required_error: "SubCategory name is required.",
+    invalid_type_error: "SubCategory nane must be a string.",
+  }).min(2, {
+    message: "SubCategory name must be at least 2 characters long."
+  }).max(50, {
+    message: "SubCategory name cannot exceed 50 characters."
+  }).regex(/^[a-zA-Z0-9\s'&-]+$/, {
+    message: "Only letters, numbers, and spaces are allowed in subcategory name.",
+  }),
+  image: z.object({
+    url: z.string(),
+  }).array().length(1, "Choose a SubCategory image"),
+  url: z.string({
+    required_error: "SubCategory url is required.",
+    invalid_type_error: "SubCategory url must be a string.",
+  }).min(2, {
+    message: "SubCategory url must be at least 2 characters long."
+  }).max(50, {
+    message: "SubCategory url cannot exceed 50 characters."
+  }).regex(/^(?!.*(?:[-_ ]){2,})[a-zA-Z0-9_-]+$/, {
+    message: "Only letters, numbers, hyphen and spaces are allowed in subcategory url.",
+  }),
+  featured: z.boolean().optional(),
+  categoryId: z.string().uuid(),
 })

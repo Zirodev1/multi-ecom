@@ -9,7 +9,6 @@ interface ImageUploadProps {
   value: string[];
   type: "standard" | "profile" | "cover";
   dontShowPreview?: boolean;
-  cloudinary_key: string;
 }
 
 const ImageUpload: FC<ImageUploadProps> = ({
@@ -19,7 +18,6 @@ const ImageUpload: FC<ImageUploadProps> = ({
   value,
   type,
   dontShowPreview,
-  cloudinary_key
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -37,7 +35,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
 
   if (type === "profile") {
     return (
-      <div className="relative rounded-full w-52 h-52 inset-x-96 bg-gray-200 border-2 border-white shadow-2xl">
+      <div className="relative rounded-full w-52 h-52 bg-gray-200 border-2 border-white shadow-2xl">
         {
           value.length>0 && (<Image src={value[0]} alt="" width={300} height={300} className="w-52 h-52 rounded-full object-cover absolute top-0 left-0 bottom-0 right-0"/>)
         }

@@ -20,12 +20,10 @@ import { useRouter } from "next/navigation"
 
 interface CategoryDetailsProps {
   data?: Category;
-  cloudinary_key: string;
 }
 
 const CategoryDetails:FC<CategoryDetailsProps> = ({
   data, 
-  cloudinary_key
 }) => {
   const { toast } = useToast();
   const router = useRouter();
@@ -37,8 +35,6 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
     url: data?.url || "",
     featured: data?.featured ?? false
   };
-
-  console.log("Default values:", defaultValues);
 
   const form = useForm<z.infer<typeof CategoryFormSchema>>({
     resolver: zodResolver(CategoryFormSchema),
@@ -82,8 +78,6 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
         createdAt: new Date(),
         updatedAt: new Date()
       };
-
-      console.log("Sending to server:", categoryData);
       
       const response = await upsertCategory(categoryData);
 
@@ -131,7 +125,6 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
                     <FormControl>
                       <ImageUpload
                         type="profile"
-                        cloudinary_key={cloudinary_key}
                         value={field.value.map((image) => image.url)}
                         disabled={isLoading}
                         onChange={(url) => {
