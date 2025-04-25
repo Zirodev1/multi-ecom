@@ -14,6 +14,7 @@ enum Role {
   ADMIN
   SELLER
 }
+
 model User {
   id       String @id @default(uuid())
   name     String
@@ -31,10 +32,12 @@ model Category {
   id       String  @id @default(uuid())
   name     String
   image    String
-  url      String @unique
+  url      String  @unique
   featured Boolean @default(false)
 
   subCategories SubCategory[] @relation("CategoryToSubcategory")
+
+  products Product[] @relation("CategoryToProduct")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,11 +47,13 @@ model SubCategory {
   id       String  @id @default(uuid())
   name     String
   image    String
-  url      String @unique
+  url      String  @unique
   featured Boolean @default(false)
 
   categoryId String
-  category Category @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
+  category   Category @relation("CategoryToSubcategory", fields: [categoryId], references: [id])
+
+  products Product[] @relation("SubCategoryToProduct")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,20 +70,20 @@ enum ShopStatus {
 }
 
 model Shop {
-  id String @id @default(uuid())
-  name String
-  description String @db.Text
-  email String @unique
-  phone String
-  url String @unique
-  logo String
-  cover String
-  status ShopStatus @default(PENDING)
-  averageRating Float @default(0)
-  featured Boolean @default(false)
-  returnPolicy String?
+  id                     String     @id @default(uuid())
+  name                   String
+  description            String     @db.Text
+  email                  String     @unique
+  phone                  String
+  url                    String     @unique
+  logo                   String
+  cover                  String
+  status                 ShopStatus @default(PENDING)
+  averageRating          Float      @default(0)
+  featured               Boolean    @default(false)
+  returnPolicy           String?
   defaultShippingService String?
-  defaultShippingFees Float?
+  defaultShippingFees    Float?
   defaultDeliveryTimeMin Int?
   defaultDeliveryTimeMax Int?
 
@@ -89,6 +94,98 @@ model Shop {
 
   user User @relation("UserShops", fields: [userId], references: [id])
 
+  products Product[] @relation("ShopToProduct")
+
   @@index([userId])
 }
 
+model Product {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  slug        String @unique
+  brand       String
+  rating      Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  shopId String
+  shop   Shop   @relation("ShopToProduct", fields: [shopId], references: [id])
+
+  categoryId String
+  category   Category @relation("CategoryToProduct", fields: [categoryId], references: [id])
+
+  subCategoryId String
+  subCategory   SubCategory @relation("SubCategoryToProduct", fields: [subCategoryId], references: [id])
+
+  product ProductVariant[] @relation("ProductToProductVariant")
+
+  @@index([shopId])
+  @@index([categoryId])
+  @@index([subCategoryId])
+}
+
+model ProductVariant {
+  id                 String  @id @default(uuid())
+  variantName        String
+  variantDescription String
+  slug               String  @unique
+  isSale             Boolean @default(false)
+  keywords           String
+  sku                String
+  seoTitle           String
+  seoDescription     String
+
+  productId String
+  product   Product @relation("ProductToProductVariant", fields: [productId], references: [id])
+
+  sizes  Size[]                @relation("ProductVariantSizes")
+  images ProductVariantImage[] @relation("ProductVariantToVariantImage")
+  colors Color[]               @relation("ProductVariantColors")
+
+  @@index([productId])
+}
+
+model Size {
+  id       String @id @default(uuid())
+  size     String
+  quantity Int
+  price    Float
+  discount Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  productVariantId String
+  productVariant   ProductVariant @relation("ProductVariantSizes", fields: [productVariantId], references: [id])
+
+  @@index([productVariantId])
+}
+
+model ProductVariantImage {
+  id  String @id @default(uuid())
+  url String
+  alt String @default("")
+
+  productVariantId String
+  productVariant   ProductVariant @relation("ProductVariantToVariantImage", fields: [productVariantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productVariantId])
+}
+
+model Color {
+  id   String @id @default(uuid())
+  name String
+
+  productVariantId String
+  productVariant   ProductVariant @relation("ProductVariantColors", fields: [productVariantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productVariantId])
+}
