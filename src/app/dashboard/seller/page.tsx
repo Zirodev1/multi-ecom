@@ -11,20 +11,20 @@ export default async function SellerDashboardPage() {
     return;
   }
 
-  const stores = await db.store.findMany({
+  const shops = await db.shop.findMany({
     where: {
       userId: user.id,
     }
   })
 
-  // if no stores by user, redirect to store creating page
-  if(stores.length === 0){
-    redirect("/dashboard/seller/stores/new");
+  // if no shops by user, redirect to store creating page
+  if(shops.length === 0){
+    redirect("/dashboard/seller/shops/new");
     return;
   }
 
   // if has store, redirect to most recent active store
-  redirect(`/dashboard/seller/stores/${stores[0].url}`)
+  redirect(`/dashboard/seller/shops/${shops[0].url}`)
 
   return (
     <div>Seller Dashboard</div>

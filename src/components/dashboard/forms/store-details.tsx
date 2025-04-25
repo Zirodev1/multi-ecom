@@ -125,7 +125,7 @@ const ShopDetails: FC<ShopDetailsProps> = ({ data }) => {
       if (data?.id) {
         router.refresh();
       } else {
-        router.push("/dashboard/seller/stores");
+        router.push("/dashboard/seller/shops");
       }
     } catch (err: any) {
       console.error("Error saving shop:", err);

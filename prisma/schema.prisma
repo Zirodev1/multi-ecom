@@ -24,7 +24,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stores Shop[] @relation("UserShops")
+  shops Shop[] @relation("UserShops")
 }
 
 model Category {
