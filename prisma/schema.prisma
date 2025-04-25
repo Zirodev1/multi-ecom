@@ -24,7 +24,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stores Store[] @relation("UserStores")
+  stores Shop[] @relation("UserShops")
 }
 
 model Category {
@@ -56,7 +56,7 @@ model SubCategory {
   @@index([categoryId])
 }
 
-enum StoreStatus {
+enum ShopStatus {
   PENDING
   ACTIVE
   BANNED
@@ -64,7 +64,7 @@ enum StoreStatus {
   VACTION
 }
 
-model Store {
+model Shop {
   id String @id @default(uuid())
   name String
   description String @db.Text
@@ -73,7 +73,7 @@ model Store {
   url String @unique
   logo String
   cover String
-  status StoreStatus @default(PENDING)
+  status ShopStatus @default(PENDING)
   averageRating Float @default(0)
   featured Boolean @default(false)
   returnPolicy String?
@@ -87,7 +87,7 @@ model Store {
 
   userId String
 
-  user User @relation("UserStores", fields: [userId], references: [id])
+  user User @relation("UserShops", fields: [userId], references: [id])
 
   @@index([userId])
 }

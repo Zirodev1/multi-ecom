@@ -1,7 +1,7 @@
-import React from 'react'
+import StoreDetails from '@/components/dashboard/forms/store-details'
 
 export default function SellerNewStorePage() {
-  return (
-    <div className='text-4xl font-bold'>SellerNewStorePage</div>
-  )
+  return <div className='p-2'>
+    <StoreDetails />
+  </div>
 }
