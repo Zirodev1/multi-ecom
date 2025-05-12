@@ -1,35 +1,45 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ColorThief from "colorthief";
+import { PrismaClient } from "@prisma/client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 // // Helper function to genarae a unique slug
-// export const generateUniqueSlug = async (
-//   baseSlug: string,
-//   model: keyof PrismaClient,
-//   field: string = "slug",
-//   separator: string = "-"
-// ) => {
-//   let slug = baseSlug;
-//   let suffix = 1;
+export const generateUniqueSlug = async (
+  baseSlug: string,
+  modelName: string,
+  field: string = "slug",
+  separator: string = "-"
+) => {
+  let slug = baseSlug;
+  let suffix = 1;
+  
+  // Import db here to avoid circular dependencies
+  const { db } = await import("@/lib/db");
 
-//   while (true) {
-//     const exisitngRecord = await (db[model] as any).findFirst({
-//       where: {
-//         [field]: slug,
-//       },
-//     });
-//     if (!exisitngRecord) {
-//       break;
-//     }
-//     slug = `${slug}${separator}${suffix}`;
-//     suffix += 1;
-//   }
-//   return slug;
-// };
+  while (true) {
+    // Use dynamic access for the model
+    const model = (db as any)[modelName];
+    if (!model) {
+      throw new Error(`Model ${modelName} not found in Prisma client`);
+    }
+    
+    const exisitngRecord = await model.findFirst({
+      where: {
+        [field]: slug,
+      },
+    });
+    if (!exisitngRecord) {
+      break;
+    }
+    slug = `${slug}${separator}${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+};
 
 export const getGridClassName = (length: number) => {
   switch (length){
