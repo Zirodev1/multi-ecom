@@ -14,11 +14,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // For deployment, ignore ESLint errors
   },
-  // Set SSG mode to false to prevent static generation failures during build
-  experimental: {
-    // Disable static generation for pages that should be dynamic
-    incrementalCacheHandlerPath: false,
-  },
+  // Turn off static optimization for all pages
+  staticPageGenerationTimeout: 1,
 };
 
 module.exports = nextConfig; 
