@@ -6,11 +6,14 @@ import { FiltersQueryType } from "@/lib/types";
 import { getProducts } from "@/queries/product";
 import { getFilteredSizes } from "@/queries/size";
 
+interface PageProps {
+  params: Record<string, string>;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
 export default async function BrowsePage({
   searchParams,
-}: {
-  searchParams: FiltersQueryType;
-}) {
+}: PageProps) {
   const {
     category,
     offer,
@@ -21,27 +24,28 @@ export default async function BrowsePage({
     maxPrice,
     minPrice,
     color,
-  } = searchParams;
+  } = searchParams as unknown as FiltersQueryType;
+  
   const products_data = await getProducts(
     {
-      search,
+      search: search as string,
       minPrice: Number(minPrice) || 0,
       maxPrice: Number(maxPrice) || Number.MAX_SAFE_INTEGER,
-      category,
-      subCategory,
-      offer,
+      category: category as string,
+      subCategory: subCategory as string,
+      offer: offer as string,
       size: Array.isArray(size)
         ? size
         : size
-        ? [size] // Convert single size string to array
+        ? [size as string] // Convert single size string to array
         : undefined, // If no size, keep it undefined
       color: Array.isArray(color)
         ? color
         : color
-        ? [color] // Convert single color string to array
+        ? [color as string] // Convert single color string to array
         : undefined, // If no color, keep it undefined
     },
-    sort
+    sort as string
   );
   const { products } = products_data;
 
@@ -54,7 +58,7 @@ export default async function BrowsePage({
 
       {/* Filters Sidebar */}
       <div className="fixed top-[124px] lg:top-16 left-2 md:left-4 pt-4 h-[calc(100vh-64px)] overflow-auto scrollbar">
-        <ProductFilters queries={searchParams} />
+        <ProductFilters queries={searchParams as unknown as FiltersQueryType} />
       </div>
       {/* Main Content */}
       <div className="ml-[190px] md:ml-[220px] pt-[140px] lg:pt-20">
