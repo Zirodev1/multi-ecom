@@ -9,7 +9,7 @@ export default function CategoryCard({
 }) {
   return (
     <div className="w-full h-full rounded-[10px] bg-white">
-      <Link href={`/browse?category=${category.url}`}>
+      <Link href={`/browse?category=${category.url}`} >
         <div className="px-5 pt-4 flex items-center justify-between">
           <span className="text-[20px] text-[#222] font-extrabold line-clamp-1 overflow-hidden flex-1">
             {category.name}
@@ -25,7 +25,7 @@ export default function CategoryCard({
             key={sub.id}
             href={`/browse?subCategory=${sub.url}`}
             className="cursor-pointer rounded-[10px] overflow-hidden"
-          >
+            >
             <Image
               src={sub.image}
               alt={sub.name}

@@ -8,7 +8,7 @@ export default function ProductAssurancePolicy() {
       <Link
         href=""
         className="text-main-primary flex items-center mt-3 text-sm"
-      >
+        >
         <ShieldCheck className="w-5" />
         <div className="flex-1 px-1">
           <span className="text-main-primary leading-5">Safe payments</span>
@@ -20,7 +20,7 @@ export default function ProductAssurancePolicy() {
       <Link
         href=""
         className="text-main-primary flex items-center mt-3 text-sm"
-      >
+        >
         <Lock className="w-5" />
         <div className="flex-1  px-1">
           <span className="text-main-primary leading-5">
@@ -35,7 +35,7 @@ export default function ProductAssurancePolicy() {
       <Link
         href=""
         className="text-main-primary flex items-center mt-3 text-sm"
-      >
+        >
         <ShieldAlert className="w-5" />
         <div className="flex-1 px-1">
           <span className="text-main-primary leading-5">Buyer protection</span>

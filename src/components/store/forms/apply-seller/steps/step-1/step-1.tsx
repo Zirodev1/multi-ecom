@@ -45,10 +45,10 @@ export default function Step1({
                 />
               </div>
               <div className="flex flex-col gap-y-3">
-                <Link href="/sign-in">
+                <Link href="/sign-in" >
                   <Button>Sign in</Button>
                 </Link>
-                <Link href="/sign-in">
+                <Link href="/sign-in" >
                   <Button variant="pink">Sign up</Button>
                 </Link>
               </div>

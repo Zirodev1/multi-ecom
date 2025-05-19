@@ -64,7 +64,7 @@ export default async function UserMenu() {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <Link href="/sign-in">
+                    <Link href="/sign-in" >
                       <Button>Sign in</Button>
                     </Link>
                     <Link
@@ -87,7 +87,7 @@ export default async function UserMenu() {
                 <ul className="grid grid-cols-3 gap-2 py-2.5 ^px-4 w-full">
                   {links.map((item) => (
                     <li key={item.title} className="grid place-items-center">
-                      <Link href={item.link} className="space-y-2">
+                      <Link href={item.link} className="space-y-2" >
                         <div className="w-14 h-14 rounded-full p-2 grid place-items-center bg-gray-100 hover:bg-gray-200">
                           <span className="text-gray-500">{item.icon}</span>
                         </div>
@@ -100,10 +100,11 @@ export default async function UserMenu() {
                 <ul className="pt-2.5 pr-4 pb-1 pl-4 w-[288px]">
                   {extraLinks.map((item, i) => (
                     <li key={i}>
-                      <Link href={item.link} legacyBehavior>
-                        <a className="block text-sm text-main-primary py-1.5 hover:underline">
-                          {item.title}
-                        </a>
+                      <Link
+                        href={item.link}
+                        className="block text-sm text-main-primary py-1.5 hover:underline"
+                        >
+                        {item.title}
                       </Link>
                     </li>
                   ))}

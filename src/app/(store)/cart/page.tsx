@@ -3,10 +3,10 @@ import Header from "@/components/store/layout/header/header";
 import { Country } from "@/lib/types";
 import { cookies } from "next/headers";
 
-export default function CartPage() {
+export default async function CartPage() {
   // Get cookies from the store
   const cookieStore = cookies();
-  const userCountryCookie = cookieStore.get("userCountry");
+  const userCountryCookie = await cookieStore.get("userCountry");
 
   // Set default country if cookie is missing
   let userCountry: Country = {

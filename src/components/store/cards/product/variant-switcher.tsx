@@ -29,7 +29,7 @@ const VariantSwitcher: FC<Props> = ({
                 "border-border": variants[index] === selectedVariant,
               })}
               onMouseEnter={() => setVariant(variants[index])}
-            >
+              >
               <Image
                 src={img.image}
                 alt=""

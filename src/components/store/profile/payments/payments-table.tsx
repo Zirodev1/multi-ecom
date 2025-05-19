@@ -109,7 +109,7 @@ export default function PaymentsTable({
                         <td>${amount.toFixed(2)}</td>
                         <td>{payment.status}</td>
                         <td className="p-4">
-                          <Link href={`/order/${payment.orderId}`}>
+                          <Link href={`/order/${payment.orderId}`} >
                             <span className="text-xs text-blue-primary cursor-pointer hover:underline">
                               View
                             </span>

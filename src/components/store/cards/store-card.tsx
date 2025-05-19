@@ -61,7 +61,7 @@ const StoreCard: FC<Props> = ({ store, checkForFollowing }) => {
     <div className="w-full">
       <div className="bg-[#f5f5f5] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 rounded-xl py-3 px-4">
         <div className="flex">
-          <Link href={`/store/${url}`}>
+          <Link href={`/store/${url}`} >
             <Image
               src={logo}
               alt={name}
@@ -72,7 +72,7 @@ const StoreCard: FC<Props> = ({ store, checkForFollowing }) => {
           </Link>
           <div className="mx-2">
             <div className="text-xl font-bold leading-6">
-              <Link href={`/store/${url}`} className="text-main-primary">
+              <Link href={`/store/${url}`} className="text-main-primary" >
                 {name}
               </Link>
             </div>

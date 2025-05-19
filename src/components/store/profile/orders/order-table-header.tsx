@@ -88,11 +88,7 @@ const OrderTableHeader: FC<Props> = ({
           {/* Select */}
           <div className="relative mb-4 w-fit">
             <select className="h-8 px-4 w-24 appearance-none outline-none cursor-pointer hover:border-[1px] hover:border-black border rounded-l-md">
-              <option value="">
-                <div className="flex h-8 text-left text-sm overflow-hidden">
-                  <span className="flex-1 whitespace-nowrap">Order</span>
-                </div>
-              </option>
+              <option value="">Order</option>
             </select>
             <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <svg
@@ -139,11 +135,8 @@ const OrderTableHeader: FC<Props> = ({
                 <option
                   key={filter.value}
                   value={filter.value}
-                  className="flex h-8 text-left text-sm overflow-hidden"
                 >
-                  <span className="flex-1 whitespace-nowrap">
-                    {filter.title}
-                  </span>
+                  {filter.title}
                 </option>
               ))}
             </select>

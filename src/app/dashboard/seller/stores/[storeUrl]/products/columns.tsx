@@ -68,7 +68,7 @@ export const columns: ColumnDef<StoreProductType>[] = [
                   />
                   <Link
                     href={`/dashboard/seller/stores/${row.original.store.url}/products/${row.original.id}/variants/${variant.id}`}
-                  >
+                    >
                     <div className="w-[304px] h-full absolute top-0 left-0 bottom-0 right-0 z-0 rounded-sm bg-black/50 transition-all duration-150 hidden group-hover:block">
                       <FilePenLine className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
                     </div>
@@ -148,7 +148,7 @@ export const columns: ColumnDef<StoreProductType>[] = [
       return (
         <Link
           href={`/dashboard/seller/stores/${row.original.store.url}/products/${row.original.id}/variants/new`}
-        >
+          >
           <CopyPlus className="hover:text-blue-200" />
         </Link>
       );

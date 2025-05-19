@@ -38,7 +38,7 @@ export default async function CheckoutPage() {
 
   // Get cookies from the store
   const cookieStore = cookies();
-  const userCountryCookie = cookieStore.get("userCountry");
+  const userCountryCookie = await cookieStore.get("userCountry");
 
   // Set default country if cookie is missing
   let userCountry: Country = {

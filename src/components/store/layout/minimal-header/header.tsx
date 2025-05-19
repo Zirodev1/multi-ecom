@@ -10,7 +10,7 @@ export default async function MinimalHeader() {
     <div className="bg-transparent h-16 w-full border-b">
       <div className="mx-auto px-6">
         <div className="relative flex items-center justify-between py-2">
-          <Link href="/">
+          <Link href="/" >
             <h1 className="font-extrabold text-2xl font-mono">GoShop</h1>
           </Link>
           <div className="flex items-center gap-x-5">
@@ -24,7 +24,7 @@ export default async function MinimalHeader() {
             {user ? (
               <UserButton />
             ) : (
-              <Link href="/sign-in">
+              <Link href="/sign-in" >
                 <Button variant="outline">Sign in</Button>
               </Link>
             )}

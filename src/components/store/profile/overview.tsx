@@ -27,7 +27,7 @@ export default async function ProfileOverview() {
               key={item.link}
               href={item.link}
               className="w-36 relative flex flex-col items-center justify-center cursor-pointer"
-            >
+              >
               <div className="text-3xl">
                 <span>{item.icon}</span>
               </div>

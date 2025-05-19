@@ -20,7 +20,7 @@ export default function ProfileSidebar() {
         </span>
         {path && (
           <span>
-            <Link href={pathname} className="capitalize">
+            <Link href={pathname} className="capitalize" >
               {path_trim || path}
             </Link>
           </span>
@@ -35,7 +35,7 @@ export default function ProfileSidebar() {
           </div>
           {/* Links */}
           {menu.map((item) => (
-            <Link key={item.link} href={item.link}>
+            <Link key={item.link} href={item.link} >
               <div
                 className={cn(
                   "relative flex h-9 items-center text-sm px-4 cursor-pointer hover:bg-[#f5f5f5]",

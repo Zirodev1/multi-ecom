@@ -16,7 +16,7 @@ export default function Sideline() {
             href="/profile"
             className="group relative block w-[35px] h-[35px] transition-all duration-100 ease-linear 
             bg-[url('/assets/images/sideline/gift.avif')] hover:bg-[url('/assets/images/sideline/gift-opened.avif')] bg-cover"
-          >
+            >
             <span
               className="hidden group-hover:block absolute -left-[160px] top-0.5 bg-[#373737] text-white px-4
              py-[0.8rem] rounded-sm transition-all duration-500 ease-linear"

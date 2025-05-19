@@ -50,7 +50,7 @@ export default function SidebarNavAdmin({
                   <Link
                     href={link.link}
                     className="flex items-center gap-2 hover:bg-transparent rounded-md transition-all w-full"
-                  >
+                    >
                     {icon}
                     <span>{link.label}</span>
                   </Link>

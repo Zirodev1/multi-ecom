@@ -70,7 +70,10 @@ const ProductInfo: FC<Props> = ({
       {/* Sku - Rating - Num reviews */}
       <div className="flex items-center text-xs mt-2">
         {/* Store details */}
-        <Link href={`/store/${store.url}`} className="mr-2 hover:underline">
+        <Link
+          href={`/store/${store.url}`}
+          className="mr-2 hover:underline"
+          >
           <div className="w-full flex items-center gap-x-1">
             <Image
               src={store.logo}
@@ -103,7 +106,7 @@ const ProductInfo: FC<Props> = ({
             isHalf
             edit={false}
           />
-          <Link href="#reviews" className="text-[#ffd804] hover:underline">
+          <Link href="#reviews" className="text-[#ffd804] hover:underline" >
             (
             {numReviews === 0
               ? "No review yet"

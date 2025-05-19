@@ -40,7 +40,7 @@ export default function ProductCard({ product }: { product: ProductType }) {
           <Link
             href={`/product/${slug}?variant=${variantSlug}`}
             className="w-full relative inline-block overflow-hidden"
-          >
+            >
             {/* Images Swiper */}
             <ProductCardImageSwiper images={images} />
             {/* Title */}

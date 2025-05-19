@@ -105,7 +105,7 @@ export default function DataTable<TData, TValue>({
             </Button>
           )}
           {newTabLink && (
-            <Link href={newTabLink}>
+            <Link href={newTabLink} >
               <Button variant="outline">
                 <FilePlus2 className="me-1" /> Create in new page
               </Button>
@@ -113,7 +113,6 @@ export default function DataTable<TData, TValue>({
           )}
         </div>
       </div>
-
       {/* Table */}
       <div className=" border bg-background rounded-lg">
         <Table className="">
@@ -164,14 +163,14 @@ export default function DataTable<TData, TValue>({
               })
             ) : (
               // No results message
-              <TableRow>
+              (<TableRow>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   No Results.
                 </TableCell>
-              </TableRow>
+              </TableRow>)
             )}
           </TableBody>
         </Table>

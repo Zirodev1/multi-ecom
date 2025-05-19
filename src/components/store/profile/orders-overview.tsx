@@ -12,7 +12,7 @@ export default function OrdersOverview() {
         <div className="inline-block flex-1 py-3 text-xl font-bold">
           My Orders
         </div>
-        <Link href="/profile/orders">
+        <Link href="/profile/orders" >
           <div className="flex items-center text-main-primary text-sm cursor-pointer">
             View All
             <span className="ml-2 text-lg inline-block">
@@ -23,7 +23,7 @@ export default function OrdersOverview() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-8">
         {menu.map((item) => (
-          <Link key={item.link} href={item.link}>
+          <Link key={item.link} href={item.link} >
             <div className="relative w-full flex flex-col justify-center items-center cursor-pointer">
               <Image
                 src={item.img}

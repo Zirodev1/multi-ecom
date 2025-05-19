@@ -39,13 +39,13 @@ export default function DownloadApp() {
                   <Link
                     href=""
                     className="rounded-3xl bg-black grid place-items-center px-4 py-3"
-                  >
+                    >
                     <Image src={AppStoreImg} alt="App store" />
                   </Link>
                   <Link
                     href=""
                     className="rounded-3xl bg-black grid place-items-center px-4 py-3"
-                  >
+                    >
                     <Image src={PlayStoreImg} alt="Play store" />
                   </Link>
                 </div>

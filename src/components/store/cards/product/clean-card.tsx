@@ -24,7 +24,9 @@ export default function ProductCardClean({
   });
   const numReviews = new Intl.NumberFormat().format(product.numReviews);
   return (
-    <Link href={`/product/${product.slug}?variant=${variant.variantSlug}`}>
+    <Link
+      href={`/product/${product.slug}?variant=${variant.variantSlug}`}
+      >
       <div className="card">
         <div className="image-container">
           <Image src={variant.images[0].url} alt="" width={300} height={300} />

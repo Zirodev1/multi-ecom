@@ -15,7 +15,7 @@ interface Props {
 const ProductList: FC<Props> = ({ products, title, link, arrow }) => {
   const Title = () => {
     if (link) {
-      <Link href={link} className="h-12">
+      <Link href={link} className="h-12" >
         <h2 className="text-main-primary text-xl font-bold">
           {title}&nbsp;
           {arrow && <ChevronRight className="w-3 inline-block" />}

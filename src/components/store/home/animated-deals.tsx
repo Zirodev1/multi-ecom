@@ -27,7 +27,7 @@ export default function AnimatedDeals({
       <Link
         href="/browse"
         className=" bg-[#ffaf00] absolute top-[25%] left-[7%] min-[1070px]:left-[10%] rounded-[24px] w-[140px] h-[181px] z-10 flex justify-center"
-      >
+        >
         <Image
           src={TopSellerImg}
           alt=""
@@ -42,7 +42,7 @@ export default function AnimatedDeals({
       <Link
         href="/browse"
         className=" bg-[#ffaf00] absolute top-[25%] right-[7%] min-[1070px]:right-[10%] rounded-[24px] w-[140px] h-[181px] z-10 flex justify-center"
-      >
+        >
         <Image
           src={TopRatedImg}
           alt=""

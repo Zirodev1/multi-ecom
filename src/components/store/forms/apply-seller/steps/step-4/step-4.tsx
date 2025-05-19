@@ -26,7 +26,7 @@ export default function Step4() {
               and will be approved shortly. Stay tuned!
             </div>
 
-            <Link href="/">
+            <Link href="/" >
               <button className="w-40 block mx-auto focus:outline-none py-2 px-5 rounded-lg shadow-sm text-center text-gray-600 bg-white hover:bg-gray-100 font-medium border">
                 Back to home
               </button>

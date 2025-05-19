@@ -40,7 +40,7 @@ export default async function HomeUserCard({
         </div>
         {/* User links */}
         <div className="w-full h-[100px] flex items-center gap-x-4 justify-center mt-4">
-          <Link href="/profile">
+          <Link href="/profile" >
             <span
               className="relative block w-12 h-12 mx-auto bg-cover bg-no-repeat"
               style={{
@@ -51,7 +51,7 @@ export default async function HomeUserCard({
               Account
             </span>
           </Link>
-          <Link href="/profile/orders">
+          <Link href="/profile/orders" >
             <span
               className="relative block w-12 h-12 mx-auto bg-cover bg-no-repeat"
               style={{
@@ -62,7 +62,7 @@ export default async function HomeUserCard({
               Orders
             </span>
           </Link>
-          <Link href="/profile/wishlist">
+          <Link href="/profile/wishlist" >
             <span
               className="relative block w-12 h-12 mx-auto bg-cover bg-no-repeat"
               style={{
@@ -115,7 +115,7 @@ export default async function HomeUserCard({
               backgroundImage: "url(/assets/images/ads/user-card-ad.avif)",
             }}
           >
-            <Link href="">
+            <Link href="" >
               <div className="h-24">
                 <div className="mt-2.5 text-white leading-[18px] text-[13px] overflow-hidden">
                   Your favorite store

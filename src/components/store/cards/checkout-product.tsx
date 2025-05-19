@@ -19,7 +19,7 @@ export default function CheckoutProductCard({
           <div className="flex items-center">
             <Link
               href={`/product/${productSlug}/${variantSlug}?size=${sizeId}`}
-            >
+              >
               <div className="m-0 mr-4 ml-2 w-28 h-28 bg-gray-200 relative rounded-lg">
                 <Image
                   src={product.image}
@@ -38,7 +38,7 @@ export default function CheckoutProductCard({
               <Link
                 href={`/product/${productSlug}/${variantSlug}?size=${sizeId}`}
                 className="inline-block overflow-hidden text-sm whitespace-nowrap overflow-ellipsis"
-              >
+                >
                 {product.name}
               </Link>
             </div>

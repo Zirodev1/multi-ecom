@@ -16,7 +16,7 @@ export default function EmptyCart() {
         <span className="py-4 font-bold my-3">
           No items yet? Continue shopping to explore more.
         </span>
-        <Link href="/browse">
+        <Link href="/browse" >
           <Button variant="pink" className="w-56">
             Explore items
           </Button>

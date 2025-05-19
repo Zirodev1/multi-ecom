@@ -213,7 +213,7 @@ const CartProduct: FC<Props> = ({
                 />
               </label>
             )}
-            <Link href={`/product/${productSlug}?variant=${variantSlug}`}>
+            <Link href={`/product/${productSlug}?variant=${variantSlug}`} >
               <div className="m-0 mr-4 ml-2 w-28 h-28 bg-gray-200 relative rounded-lg">
                 <Image
                   src={image}
@@ -232,7 +232,7 @@ const CartProduct: FC<Props> = ({
               <Link
                 href={`/product/${productSlug}?variant=${variantSlug}`}
                 className="inline-block overflow-hidden text-sm whitespace-nowrap overflow-ellipsis"
-              >
+                >
                 {name} · {variantName}
               </Link>
               <div className="absolute top-0 right-0">
