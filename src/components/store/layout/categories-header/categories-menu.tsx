@@ -81,8 +81,8 @@ export default function CategoriesMenu({
         >
           {categories.map((category) => (
             <li key={category.id} className="relative hover:bg-white">
-              <Link
-                href={`/browse?category=${category.url}`}
+            <Link
+              href={`/browse?category=${category.url}`}
                 className="text-[#222] flex items-center m-0 p-3 pl-6"
               >
                 <Image
@@ -96,7 +96,7 @@ export default function CategoriesMenu({
                   {category.name}
                 </span>
               </Link>
-            </li>
+              </li>
           ))}
         </ul>
       </div>

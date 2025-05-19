@@ -13,25 +13,12 @@ import OfferTagDetails from "@/components/dashboard/forms/offer-tag-details";
 // Columns
 import { columns } from "./columns";
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-
 export default async function AdminOfferTagsPage() {
-  // Create empty array for offer tags
-  let offerTags = [];
-  
-  try {
-    // Fetching offer tags data from the database
-    const data = await getAllOfferTags();
-    
-    // If we got data, use it
-    if (data) {
-      offerTags = data;
-    }
-  } catch (error) {
-    console.error("Error fetching offer tags:", error);
-    // Continue with empty array
-  }
+  // Fetching offer tags data from the database
+  const categories = await getAllOfferTags();
+
+  // Checking if no offer tags are found
+  if (!categories) return null; // If no offer tags found, return null
 
   return (
     <DataTable
@@ -43,7 +30,7 @@ export default async function AdminOfferTagsPage() {
       }
       modalChildren={<OfferTagDetails />}
       filterValue="name"
-      data={offerTags}
+      data={categories}
       searchPlaceholder="Search offer tag name..."
       columns={columns}
     />

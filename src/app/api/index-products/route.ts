@@ -4,13 +4,6 @@ import { NextResponse } from "next/server";
 
 // POST handler for indexing products and variants to Elasticsearch
 export async function POST() {
-  // If Elasticsearch client is not available, return early
-  if (!client) {
-    return NextResponse.json({
-      message: "Elasticsearch is not configured. Skipping indexing operation.",
-    }, { status: 200 });
-  }
-
   try {
     // Fetch products and their variants with images where order = 1 from the database using Prisma
     const products = await db.product.findMany({

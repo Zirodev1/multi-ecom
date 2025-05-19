@@ -14,8 +14,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // For deployment, ignore ESLint errors
   },
-  // Turn off static optimization for all pages
-  staticPageGenerationTimeout: 1,
 };
 
 module.exports = nextConfig; 

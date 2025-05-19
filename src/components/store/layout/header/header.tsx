@@ -8,9 +8,9 @@ import { Country } from "@/lib/types";
 import CountryLanguageCurrencySelector from "./country-lang-curr-selector";
 
 export default async function Header() {
-  // Get cookies from the store - properly awaited
-  const cookieStore = await cookies();
-  const userCountryCookie = cookieStore.get("userCountry");
+  // Get cookies from the store
+  const cookieStore = cookies();
+  const userCountryCookie = await cookieStore.get("userCountry");
 
   // Set default country if cookie is missing
   let userCountry: Country = {

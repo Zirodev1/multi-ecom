@@ -2,7 +2,7 @@ import ProductFilters from "@/components/store/browse-page/filters";
 import ProductSort from "@/components/store/browse-page/sort";
 import ProductCard from "@/components/store/cards/product/product-card";
 import Header from "@/components/store/layout/header/header";
-import { FiltersQueryType, ProductType } from "@/lib/types";
+import { FiltersQueryType } from "@/lib/types";
 import { getProducts } from "@/queries/product";
 import { getFilteredSizes } from "@/queries/size";
 
@@ -11,9 +11,6 @@ interface PageProps {
   params: Record<string, string>;
   searchParams: { [key: string]: string | string[] | undefined };
 }
-
-// Set dynamic rendering for this page
-export const dynamic = 'force-dynamic';
 
 export default async function BrowsePage({
   searchParams,
@@ -30,35 +27,28 @@ export default async function BrowsePage({
     color,
   } = searchParams as unknown as FiltersQueryType;
   
-  let products: ProductType[] = [];
-  
-  try {
-    const products_data = await getProducts(
-      {
-        search: search as string,
-        minPrice: Number(minPrice) || 0,
-        maxPrice: Number(maxPrice) || Number.MAX_SAFE_INTEGER,
-        category: category as string,
-        subCategory: subCategory as string,
-        offer: offer as string,
-        size: Array.isArray(size)
-          ? size
-          : size
-          ? [size as string] // Convert single size string to array
-          : undefined, // If no size, keep it undefined
-        color: Array.isArray(color)
-          ? color
-          : color
-          ? [color as string] // Convert single color string to array
-          : undefined, // If no color, keep it undefined
-      },
-      sort as string
-    );
-    products = products_data.products;
-  } catch (error) {
-    console.error("Error fetching browse products:", error);
-    // Continue with empty products array
-  }
+  const products_data = await getProducts(
+    {
+      search: search as string,
+      minPrice: Number(minPrice) || 0,
+      maxPrice: Number(maxPrice) || Number.MAX_SAFE_INTEGER,
+      category: category as string,
+      subCategory: subCategory as string,
+      offer: offer as string,
+      size: Array.isArray(size)
+        ? size
+        : size
+        ? [size as string] // Convert single size string to array
+        : undefined, // If no size, keep it undefined
+      color: Array.isArray(color)
+        ? color
+        : color
+        ? [color as string] // Convert single color string to array
+        : undefined, // If no color, keep it undefined
+    },
+    sort as string
+  );
+  const { products } = products_data;
 
   return (
     <div className="relative h-screen overflow-hidden">
@@ -80,16 +70,9 @@ export default async function BrowsePage({
 
         {/* Product List */}
         <div className="mt-4 px-4 w-full overflow-y-auto max-h-[calc(100vh-155px)] pb-28 scrollbar flex flex-wrap">
-          {products.length > 0 ? (
-            products.map((product, i) => (
-              <ProductCard key={product.id + product.slug} product={product} />
-            ))
-          ) : (
-            <div className="w-full text-center py-10">
-              <p className="text-gray-500">No products found</p>
-              <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or search terms</p>
-            </div>
-          )}
+          {products.map((product, i) => (
+            <ProductCard key={product.id + product.slug} product={product} />
+          ))}
         </div>
       </div>
     </div>
