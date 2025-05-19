@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 // Define product type
 interface Product {
   name: string;
+  link: string;
+  image: string;
 }
 
 export async function GET(req: Request) {
@@ -17,6 +19,11 @@ export async function GET(req: Request) {
       },
       { status: 400 }
     );
+  }
+
+  // If Elasticsearch client is not available, return empty results
+  if (!client) {
+    return NextResponse.json([]);
   }
 
   try {
@@ -40,6 +47,8 @@ export async function GET(req: Request) {
     return NextResponse.json(results);
   } catch (error: any) {
     // Log the error and return a response
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    console.error("Elasticsearch search error:", error.message);
+    // Return empty results on error
+    return NextResponse.json([]);
   }
 }
