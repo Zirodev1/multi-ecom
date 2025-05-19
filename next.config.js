@@ -7,6 +7,7 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+    unoptimized: true, // Disable image optimization for deployment
   },
   typescript: {
     ignoreBuildErrors: true, // For deployment, ignore TS errors
