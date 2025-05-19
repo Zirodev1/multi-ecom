@@ -6,6 +6,7 @@ import { FiltersQueryType } from "@/lib/types";
 import { getProducts } from "@/queries/product";
 import { getFilteredSizes } from "@/queries/size";
 
+// Updated for Next.js 15 compatibility
 interface PageProps {
   params: Record<string, string>;
   searchParams: { [key: string]: string | string[] | undefined };
