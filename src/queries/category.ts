@@ -1,30 +1,38 @@
 "use server";
 
+// Clerk
 import { currentUser } from "@clerk/nextjs/server";
-import { Category } from "@/generated/client";
+
+// DB
 import { db } from "@/lib/db";
 
+// Prisma model
+import { Category } from "@prisma/client";
 
-
-// Function: upsetCategory
-//Description: Upsets category into database, updating if it exits or creating a new on if it doesn't
-//Permission Level: Admin only
-//parameter:
-//  -category Category object contianing details of the categoy to be upserted.
-// returns: updated or newly created category details.
+// Function: upsertCategory
+// Description: Upserts a category into the database, updating if it exists or creating a new one if not.
+// Permission Level: Admin only
+// Parameters:
+//   - category: Category object containing details of the category to be upserted.
+// Returns: Updated or newly created category details.
 export const upsertCategory = async (category: Category) => {
   try {
+    // Get current user
     const user = await currentUser();
 
-    if(!user) throw new Error("Unauthenticated");
+    // Ensure user is authenticated
+    if (!user) throw new Error("Unauthenticated.");
 
-    if(user.privateMetadata.role !== "ADMIN"){
-      throw new Error("Unauthorized Access: Admin Privileges Required for Entry.");
-    }
+    // Verify admin permission
+    if (user.privateMetadata.role !== "ADMIN")
+      throw new Error(
+        "Unauthorized Access: Admin Privileges Required for Entry."
+      );
 
-    if(!category) throw new Error("Please provide category data.");
-    if(!category.name) throw new Error("Category name is required.");
+    // Ensure category data is provided
+    if (!category) throw new Error("Please provide category data.");
 
+    // Throw error if category with same name or URL already exists
     const existingCategory = await db.category.findFirst({
       where: {
         AND: [
@@ -40,58 +48,73 @@ export const upsertCategory = async (category: Category) => {
       },
     });
 
-    if(existingCategory){
+    // Throw error if category with same name or URL already exists
+    if (existingCategory) {
       let errorMessage = "";
-      if(existingCategory.name === category.name){
-        errorMessage = "A category with this name already exists.";
-      }else if (existingCategory.url === category.url){
+      if (existingCategory.name === category.name) {
+        errorMessage = "A category with the same name already exists";
+      } else if (existingCategory.url === category.url) {
         errorMessage = "A category with the same URL already exists";
       }
       throw new Error(errorMessage);
     }
 
+    // Upsert category into the database
     const categoryDetails = await db.category.upsert({
-      where:{
-        id: category.id
-      },
-      update: {
-        name: category.name,
-        image: category.image,
-        url: category.url,
-        featured: category.featured,
-        updatedAt: category.updatedAt
-      },
-      create: {
+      where: {
         id: category.id,
-        name: category.name,
-        image: category.image,
-        url: category.url,
-        featured: category.featured,
-        createdAt: category.createdAt,
-        updatedAt: category.updatedAt
       },
+      update: category,
+      create: category,
     });
-    
     return categoryDetails;
   } catch (error) {
+    // Log and re-throw any errors
     throw error;
   }
-}
+};
 
 // Function: getAllCategories
 // Description: Retrieves all categories from the database.
 // Permission Level: Public
-// Returns: Array of categories sorted by updatedAt date in descending order. 
-export const getAllCategories = async () => {
-  // retrieve all categories from the database
+// Returns: Array of categories sorted by updatedAt date in descending order.
+export const getAllCategories = async (storeUrl?: string) => {
+  let storeId: string | undefined;
+
+  if (storeUrl) {
+    // Retrieve the storeId based on the storeUrl
+    const store = await db.store.findUnique({
+      where: { url: storeUrl },
+    });
+
+    // If no store is found, return an empty array or handle as needed
+    if (!store) {
+      return [];
+    }
+
+    storeId = store.id;
+  }
+
+  // Retrieve all categories from the database
   const categories = await db.category.findMany({
+    where: storeId
+      ? {
+          products: {
+            some: {
+              storeId: storeId,
+            },
+          },
+        }
+      : {},
+    include: {
+      subCategories: true,
+    },
     orderBy: {
-      updatedAt: "desc"
+      updatedAt: "desc",
     },
   });
-
   return categories;
-}
+};
 
 // Function: getAllCategoriesForCategory
 // Description: Retrieves all SubCategories fro a category from the database.

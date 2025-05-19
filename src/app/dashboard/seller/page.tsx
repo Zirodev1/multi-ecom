@@ -1,32 +1,35 @@
-import { db } from '@/lib/db';
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation';
-import React from 'react'
+// Next.js
+import { redirect } from "next/navigation";
+
+// Clerk
+import { currentUser } from "@clerk/nextjs/server";
+
+// DB
+import { db } from "@/lib/db";
 
 export default async function SellerDashboardPage() {
-  //Fetch current user
+  // Fetch the current user. If the user is not authenticated, redirect them to the home page.
   const user = await currentUser();
-  if(!user) {
+  if (!user) {
     redirect("/");
-    return;
+    return; // Ensure no further code is executed after redirect
   }
 
-  const shops = await db.shop.findMany({
+  // Retrieve the list of stores associated with the authenticated user.
+  const stores = await db.store.findMany({
     where: {
       userId: user.id,
-    }
-  })
+    },
+  });
 
-  // if no shops by user, redirect to store creating page
-  if(shops.length === 0){
-    redirect("/dashboard/seller/shops/new");
-    return;
+  // If the user has no stores, redirect them to the page for creating a new store.
+  if (stores.length === 0) {
+    redirect("/dashboard/seller/stores/new");
+    return; // Ensure no further code is executed after redirect
   }
 
-  // if has store, redirect to most recent active store
-  redirect(`/dashboard/seller/shops/${shops[0].url}`)
+  // If the user has stores, redirect them to the dashboard of their first store.
+  redirect(`/dashboard/seller/stores/${stores[0].url}`);
 
-  return (
-    <div>Seller Dashboard</div>
-  )
+  return <div>Seller Dashboard</div>;
 }

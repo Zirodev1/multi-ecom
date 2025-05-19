@@ -1,17 +1,23 @@
-import Image from "next/image";
+"use client";
+
+// React, Next.js
 import { FC, useEffect, useState } from "react";
-import { CldUploadWidget } from "next-cloudinary"
-import { cn } from "@/lib/utils";
+import Image from "next/image";
+
+// Cloudinary
+import { CldUploadWidget } from "next-cloudinary";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
-  disabled? : boolean;
+  disabled?: boolean;
   onChange: (value: string) => void;
   onRemove: (value: string) => void;
   value: string[];
   type: "standard" | "profile" | "cover";
   dontShowPreview?: boolean;
+  error?: boolean;
 }
 
 const ImageUpload: FC<ImageUploadProps> = ({
@@ -21,29 +27,55 @@ const ImageUpload: FC<ImageUploadProps> = ({
   value,
   type,
   dontShowPreview,
+  error,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isBouncing, setIsBouncing] = useState(false); // Add state for bounce
+
+  useEffect(() => {
+    if (error) {
+      setIsBouncing(true);
+      const timer = setTimeout(() => {
+        setIsBouncing(false); // Stop the bounce after 1 and half second
+      }, 1500);
+      return () => clearTimeout(timer); // Clean up timer if the component unmounts or error changes
+    }
+  }, [error]);
 
   useEffect(() => {
     setIsMounted(true);
-  },[])
+  }, []);
 
-  if(!isMounted){
+  if (!isMounted) {
     return null;
   }
 
   const onUpload = (result: any) => {
     onChange(result.info.secure_url);
-  }
+  };
 
   if (type === "profile") {
     return (
-      <div className="relative inset-x-96 rounded-full w-52 h-52 bg-gray-200 border-2 border-white shadow-2xl">
-        {
-          value.length>0 && (<Image src={value[0]} alt="" width={300} height={300} className="w-52 h-52 rounded-full object-cover absolute top-0 left-0 bottom-0 right-0"/>)
-        }
-        <CldUploadWidget uploadPreset="yxj41ld4" onSuccess={onUpload}>
-        {({ open }) => {
+      <div
+        className={cn(
+          "relative  rounded-full w-52 h-52  bg-gray-200 border-2 border-white shadow-2xl overflow-visible",
+          {
+            "bg-red-100": error,
+            "animate-pulse": isBouncing,
+          }
+        )}
+      >
+        {value.length > 0 && (
+          <Image
+            src={value[0]}
+            alt=""
+            width={300}
+            height={300}
+            className="w-52 h-52 rounded-full object-cover absolute top-0 left-0 bottom-0 right-0"
+          />
+        )}
+        <CldUploadWidget onSuccess={onUpload} uploadPreset="ufb48euh">
+          {({ open }) => {
             const onClick = () => {
               open();
             };
@@ -52,7 +84,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
               <>
                 <button
                   type="button"
-                  className="cursor-pointer z-20 absolute right-0 bottom-6 flex items-center font-medium text-[17px] h-14 w-14 justify-center text-white bg-blue-900 border shadow-lg rounded-full hover:shadow-md active:shadow-sm"
+                  className="z-20 absolute right-0 bottom-6 flex items-center font-medium text-[17px] h-14 w-14 justify-center  text-white bg-gradient-to-t from-blue-primary to-blue-300 border-none shadow-lg rounded-full hover:shadow-md active:shadow-sm"
                   disabled={disabled}
                   onClick={onClick}
                 >
@@ -70,16 +102,16 @@ const ImageUpload: FC<ImageUploadProps> = ({
           }}
         </CldUploadWidget>
       </div>
-    )
-  }else if (type === "cover"){
+    );
+  } else if (type === "cover") {
     return (
       <div
         className={cn(
           "relative w-full bg-gray-100 rounded-lg bg-gradient-to-b from-gray-100 via-gray-100 to-gray-400 overflow-hidden",
-          // {
-          //   "from-red-100 to-red-200 ": error,
-          //   "animate-bounce": isBouncing,
-          // }
+          {
+            "from-red-100 to-red-200 ": error,
+            "animate-bounce": isBouncing,
+          }
         )}
         style={{ height: "348px" }}
       >
@@ -92,7 +124,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
             className="w-full h-full rounded-lg object-cover"
           />
         )}
-        <CldUploadWidget onSuccess={onUpload} uploadPreset="yxj41ld4">
+        <CldUploadWidget onSuccess={onUpload} uploadPreset="ufb48euh">
           {({ open }) => {
             const onClick = () => {
               open();
@@ -123,7 +155,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
         </CldUploadWidget>
       </div>
     );
-  }else {
+  } else {
     return (
       <div>
         <div className="mb-4 flex items-center gap-4">
@@ -136,7 +168,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
               >
                 {/* Delete image btn */}
                 <div className="z-10 absolute top-2 right-2">
-                    <Button
+                  <Button
                     onClick={() => onRemove(imageUrl)}
                     type="button"
                     variant="destructive"
@@ -156,7 +188,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
               </div>
             ))}
         </div>
-        <CldUploadWidget onSuccess={onUpload} uploadPreset="yxj41ld4">
+        <CldUploadWidget onSuccess={onUpload} uploadPreset="ufb48euh">
           {({ open }) => {
             const onClick = () => {
               open();
@@ -188,7 +220,6 @@ const ImageUpload: FC<ImageUploadProps> = ({
       </div>
     );
   }
+};
 
-}
-
-export default ImageUpload
+export default ImageUpload;

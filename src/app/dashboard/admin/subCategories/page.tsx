@@ -1,34 +1,37 @@
-import SubCategoryDetails from '@/components/dashboard/forms/subCategory-details';
-import DataTable from '@/components/ui/data-table';
-import { getAllCategories } from '@/queries/category';
-import { getAllSubCategories } from '@/queries/subCategory'
-import { Plus } from 'lucide-react';
-import React from 'react'
-import { columns } from './columns';
+// Data table
+import SubCategoryDetails from "@/components/dashboard/forms/subCategory-details";
+import DataTable from "@/components/ui/data-table";
 
-export default async function AdminSubCategoryPage() {
-  // Fetch subCategories from form databse
+// Queries
+import { getAllCategories } from "@/queries/category";
+import { getAllSubCategories } from "@/queries/subCategory";
+import { Plus } from "lucide-react";
+import { columns } from "./columns";
+
+export default async function AdminSubCategoriesPage() {
+  // Fetching subCategories data from the database
   const subCategories = await getAllSubCategories();
 
-  if(!subCategories) return null;
+  // Checking if no subCategories are found
+  if (!subCategories) return null; // If no subCategories found, return null
 
-  // Fetching categories from database
+  // Fetching categories data from the database
   const categories = await getAllCategories();
 
   return (
     <DataTable
       actionButtonText={
         <>
-          <Plus size={15}/>
+          <Plus size={15} />
           Create SubCategory
         </>
       }
       modalChildren={<SubCategoryDetails categories={categories} />}
-      filterValue='name'
-      newTabLink='/dashboard/admin/subCategories/new'
+      newTabLink="/dashboard/admin/subCategories/new"
+      filterValue="name"
       data={subCategories}
-      searchPlaceholder='Search subCategory...'
+      searchPlaceholder="Search subCategory name..."
       columns={columns}
     />
-  )
+  );
 }

@@ -7,7 +7,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 // Prisma model
-import { Category, SubCategory } from "@/generated/client";
+import { Category, SubCategory } from "@prisma/client";
 
 // Function: upsertSubCategory
 // Description: Upserts a subCategory into the database, updating if it exists or creating a new one if not.

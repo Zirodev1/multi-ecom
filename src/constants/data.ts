@@ -7,9 +7,9 @@ export const adminDashboardSidebarOptions: DashboardSidebarMenuInterface[] = [
     link: "/dashboard/admin",
   },
   {
-    label: "Shops",
-    icon: "shop",
-    link: "/dashboard/admin/shops",
+    label: "Stores",
+    icon: "store",
+    link: "/dashboard/admin/stores",
   },
   {
     label: "Orders",

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 // Custom components
 import CustomModal from "@/components/dashboard/shared/custom-modal";
+import SubCategoryDetails from "@/components/dashboard/forms/subCategory-details";
 
 // UI components
 import {
@@ -45,15 +46,16 @@ import {
 
 // Queries
 import { getAllCategories } from "@/queries/category";
-import { getSubCategory, deleteSubCategory } from "@/queries/subCategory";
+import { deleteSubCategory, getSubCategory } from "@/queries/subCategory";
 
 // Tanstack React Table
 import { ColumnDef } from "@tanstack/react-table";
 
 // Prisma models
-import { Category, SubCategory } from "@/generated/client";
+import { Category } from "@prisma/client";
+
+// Types
 import { SubCategoryWithCategoryType } from "@/lib/types";
-import SubCategoryDetails from "@/components/dashboard/forms/subCategory-details";
 
 export const columns: ColumnDef<SubCategoryWithCategoryType>[] = [
   {
@@ -86,17 +88,17 @@ export const columns: ColumnDef<SubCategoryWithCategoryType>[] = [
   },
 
   {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      return <span>{row.original.category.name}</span>;
-    },
-  },
-  {
     accessorKey: "url",
     header: "URL",
     cell: ({ row }) => {
       return <span>/{row.original.url}</span>;
+    },
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => {
+      return <span>{row.original.category.name}</span>;
     },
   },
   {
@@ -131,15 +133,11 @@ interface CellActionsProps {
 
 // CellActions component definition
 const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
-  // Hooks
+  // Declare all hooks at the top
   const { setOpen, setClose } = useModal();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-
-  // Return null if rowData or rowData.id don't exist
-  if (!rowData || !rowData.id) return null;
-
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
@@ -148,7 +146,10 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
       setCategories(categories);
     };
     fetchCategories();
-  },[])
+  }, []);
+
+  // Early return only after hooks are declared
+  if (!rowData || !rowData.id) return null;
 
   return (
     <AlertDialog>
@@ -165,10 +166,11 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
             className="flex gap-2"
             onClick={() => {
               setOpen(
-                // Custom modal component
                 <CustomModal>
-                  {/* Store details component */}
-                  <SubCategoryDetails categories={categories} data={{ ...rowData }} />
+                  <SubCategoryDetails
+                    categories={categories}
+                    data={{ ...rowData }}
+                  />
                 </CustomModal>,
                 async () => {
                   return {
@@ -184,7 +186,7 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="flex gap-2" onClick={() => {}}>
-              <Trash size={15} /> Delete SubCategory
+              <Trash size={15} /> Delete subCategory
             </DropdownMenuItem>
           </AlertDialogTrigger>
         </DropdownMenuContent>
@@ -196,7 +198,7 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
           </AlertDialogTitle>
           <AlertDialogDescription className="text-left">
             This action cannot be undone. This will permanently delete the
-            SubCategory and related data.
+            subCategory and related data.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex items-center">
@@ -208,8 +210,8 @@ const CellActions: React.FC<CellActionsProps> = ({ rowData }) => {
               setLoading(true);
               await deleteSubCategory(rowData.id);
               toast({
-                title: "Deleted SubCategory",
-                description: "The SubCategory has been deleted.",
+                title: "Deleted subCategory",
+                description: "The subCategory has been deleted.",
               });
               setLoading(false);
               router.refresh();

@@ -4,7 +4,7 @@
 import { FC, useEffect } from "react";
 
 // Prisma model
-import { Category, SubCategory } from "@/generated/client";
+import { Category, SubCategory } from "@prisma/client";
 
 // Form handling utilities
 import * as z from "zod";
@@ -65,102 +65,74 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
   const { toast } = useToast(); // Hook for displaying toast messages
   const router = useRouter(); // Hook for routing
 
-  // Initialize default values explicitly
-  const defaultValues = {
-    name: data?.name || "",
-    image: data?.image ? [{ url: data?.image }] : [],
-    url: data?.url || "",
-    featured: data?.featured ?? false,
-    categoryId: data?.categoryId || (categories[0]?.id || "")
-  };
-
-  console.log("Default values:", defaultValues);
-
   // Form hook for managing form state and validation
   const form = useForm<z.infer<typeof SubCategoryFormSchema>>({
     mode: "onChange", // Form validation mode
     resolver: zodResolver(SubCategoryFormSchema), // Resolver for form validation
-    defaultValues,
+    defaultValues: {
+      // Setting default form values from data (if available)
+      name: data?.name,
+      image: data?.image ? [{ url: data?.image }] : [],
+      url: data?.url,
+      featured: data?.featured,
+      categoryId: data?.categoryId,
+    },
   });
 
   // Loading status based on form submission
   const isLoading = form.formState.isSubmitting;
 
-  // Watch all form values for debugging
-  const formValues = form.watch();
-  console.log("Current form values:", formValues);
+  const formData = form.watch();
 
   // Reset form values when data changes
   useEffect(() => {
     if (data) {
       form.reset({
-        name: data.name || "",
-        image: data.image ? [{ url: data.image }] : [],
-        url: data.url || "",
-        featured: data.featured ?? false,
-        categoryId: data.categoryId || "",
+        name: data?.name,
+        image: [{ url: data?.image }],
+        url: data?.url,
+        featured: data?.featured,
+        categoryId: data.categoryId,
       });
     }
   }, [data, form]);
 
   // Submit handler for form submission
-  const onSubmit = async (values: z.infer<typeof SubCategoryFormSchema>) => {
+  const handleSubmit = async (
+    values: z.infer<typeof SubCategoryFormSchema>
+  ) => {
     try {
-      console.log("FORM VALUES SUBMITTED:", values);
-      
-      // Validate name field directly
-      if (!values.name || values.name.trim() === "") {
-        toast({
-          variant: "destructive",
-          title: "SubCategory name is required",
-          description: "Please enter a valid name for the subcategory"
-        });
-        return;
-      }
-
-      // Validate categoryId field
-      if (!values.categoryId) {
-        toast({
-          variant: "destructive", 
-          title: "Category selection is required",
-          description: "Please select a parent category"
-        });
-        return;
-      }
-
-      // Prepare data with explicit conversions
-      const subCategoryData = {
-        id: data?.id || v4(),
-        name: String(values.name).trim(),
-        image: values.image && values.image[0] ? String(values.image[0].url) : "",
-        url: String(values.url || "").trim(),
-        featured: Boolean(values.featured),
+      // Upserting category data
+      const response = await upsertSubCategory({
+        id: data?.id ? data.id : v4(),
+        name: values.name,
+        image: values.image[0].url,
+        url: values.url,
+        featured: values.featured,
+        categoryId: values.categoryId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        categoryId: String(values.categoryId)
-      };
-      
-      console.log("Sending to server:", subCategoryData);
-      
-      const response = await upsertSubCategory(subCategoryData);
-
-      toast({
-        title: data?.id 
-          ? "SubCategory has been updated." 
-          : `Congrats ${response.name} has now been created.`,
       });
 
+      // Displaying success message
+      toast({
+        title: data?.id
+          ? "SubCategory has been updated."
+          : `Congratulations! '${response?.name}' is now created.`,
+      });
+
+      // Redirect or Refresh data
       if (data?.id) {
         router.refresh();
       } else {
         router.push("/dashboard/admin/subCategories");
       }
-    } catch (err: any) {
-      console.error("Error saving subcategory:", err);
+    } catch (error: any) {
+      // Handling form submission errors
       toast({
         variant: "destructive",
         title: "Oops!",
-        description: err.toString(),
+        description: error.toString(),
       });
     }
   };
@@ -179,7 +151,7 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-4"
             >
               <FormField
@@ -192,18 +164,14 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                         type="profile"
                         value={field.value.map((image) => image.url)}
                         disabled={isLoading}
-                        onChange={(url) => {
-                          console.log("Image changed:", url);
-                          field.onChange([{ url }]);
-                        }}
-                        onRemove={(url) => {
-                          console.log("Image removed:", url);
+                        onChange={(url) => field.onChange([{ url }])}
+                        onRemove={(url) =>
                           field.onChange([
                             ...field.value.filter(
                               (current) => current.url !== url
                             ),
-                          ]);
-                        }}
+                          ])
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -211,61 +179,50 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                 )}
               />
               <FormField
+                disabled={isLoading}
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>SubCategory name</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Name" 
-                        {...field} 
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        required
-                      />
+                      <Input placeholder="Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
+                disabled={isLoading}
                 control={form.control}
                 name="url"
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>SubCategory url</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="/subCategory-url" 
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        required
-                      />
+                      <Input placeholder="/subCategory-url" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
+                disabled={isLoading}
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>Category</FormLabel>
                     <Select
-                      disabled={isLoading || categories.length === 0}
-                      onValueChange={(value) => {
-                        console.log("Category selected:", value);
-                        field.onChange(value);
-                      }}
-                      value={field.value || ""}
-                      defaultValue={field.value || ""}
+                      disabled={isLoading || categories.length == 0}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue
+                            defaultValue={field.value}
                             placeholder="Select a category"
                           />
                         </SelectTrigger>
@@ -289,11 +246,9 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value || false}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          console.log("Featured changed:", checked);
-                        }}
+                        checked={field.value}
+                        // @ts-ignore
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
@@ -306,9 +261,9 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                 )}
               />
 
-              <Button type="submit" disabled={isLoading} className="cursor-pointer">
+              <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? "Loading..."
+                  ? "loading..."
                   : data?.id
                   ? "Save SubCategory information"
                   : "Create SubCategory"}

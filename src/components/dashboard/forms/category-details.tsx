@@ -1,122 +1,141 @@
-"use client"
+"use client";
 
-import { FC, useEffect } from "react"
-import { Category } from "../../../generated/client"
-import * as z from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
+// React
+import { FC, useEffect } from "react";
+
+// Prisma model
+import { Category } from "@prisma/client";
+
+// Form handling utilities
+import * as z from "zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Schema
 import { CategoryFormSchema } from "@/lib/schemas";
-import { AlertDescription } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
-import ImageUpload from "../shared/image-upload"
-import { upsertCategory } from "@/queries/category"
-import { v4 } from "uuid"
+
+// UI Components
+import { AlertDialog } from "@/components/ui/alert-dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import ImageUpload from "../shared/image-upload";
+
+// Queries
+import { upsertCategory } from "@/queries/category";
+
+// Utils
+import { v4 } from "uuid";
 import { useToast } from "@/components/ui/use-toast";
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 
 interface CategoryDetailsProps {
   data?: Category;
 }
 
-const CategoryDetails:FC<CategoryDetailsProps> = ({
-  data, 
-}) => {
-  const { toast } = useToast();
-  const router = useRouter();
+const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
+  // Initializing necessary hooks
+  const { toast } = useToast(); // Hook for displaying toast messages
+  const router = useRouter(); // Hook for routing
 
-  // Define default values explicitly
-  const defaultValues = {
-    name: data?.name || "",
-    image: data?.image ? [{ url: data?.image }] : [],
-    url: data?.url || "",
-    featured: data?.featured ?? false
-  };
-
+  // Form hook for managing form state and validation
   const form = useForm<z.infer<typeof CategoryFormSchema>>({
-    resolver: zodResolver(CategoryFormSchema),
-    defaultValues,
-    mode: "onChange"
+    mode: "onChange", // Form validation mode
+    resolver: zodResolver(CategoryFormSchema), // Resolver for form validation
+    defaultValues: {
+      // Setting default form values from data (if available)
+      name: data?.name,
+      image: data?.image ? [{ url: data?.image }] : [],
+      url: data?.url,
+      featured: data?.featured,
+    },
   });
 
+  // Loading status based on form submission
   const isLoading = form.formState.isSubmitting;
 
-  // Reset form data if parent data changes
+  // Reset form values when data changes
   useEffect(() => {
     if (data) {
       form.reset({
-        name: data.name || "",
-        image: data.image ? [{ url: data.image }] : [],
-        url: data.url || "",
-        featured: data.featured ?? false
+        name: data?.name,
+        image: [{ url: data?.image }],
+        url: data?.url,
+        featured: data?.featured,
       });
     }
   }, [data, form]);
 
-  const onSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
+  // Submit handler for form submission
+  const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
     try {
-      console.log("FORM VALUES SUBMITTED:", values);
-      
-      if (!values.name || values.name.trim() === "") {
-        toast({
-          variant: "destructive",
-          title: "Category name is required",
-          description: "Please enter a valid category name"
-        });
-        return;
-      }
-
-      const categoryData = {
-        id: data?.id || v4(),
-        name: values.name.trim(),
-        image: values.image && values.image[0] ? values.image[0].url : "",
-        url: values.url.trim(),
-        featured: values.featured ?? false,
+      // Upserting category data
+      const response = await upsertCategory({
+        id: data?.id ? data.id : v4(),
+        name: values.name,
+        image: values.image[0].url,
+        url: values.url,
+        featured: values.featured,
         createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      const response = await upsertCategory(categoryData);
-
-      toast({
-        title: data?.id 
-          ? "Category has been updated." 
-          : `Congrats ${response.name} has now been created.`,
+        updatedAt: new Date(),
       });
 
+      // Displaying success message
+      toast({
+        title: data?.id
+          ? "Category has been updated."
+          : `Congratulations! '${response?.name}' is now created.`,
+      });
+
+      // Redirect or Refresh data
       if (data?.id) {
         router.refresh();
       } else {
         router.push("/dashboard/admin/categories");
       }
-    } catch (err: any) {
-      console.error("Error saving category:", err);
+    } catch (error: any) {
+      // Handling form submission errors
       toast({
         variant: "destructive",
         title: "Oops!",
-        description: err.toString(),
+        description: error.toString(),
       });
     }
   };
 
   return (
-    <AlertDescription>
+    <AlertDialog>
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Category Information</CardTitle>
           <CardDescription>
-            {
-              data?.id ? `Update ${data?.name} category information.` :
-              "Lets create a category. Editing Category can be done in the category tab."
-            }
+            {data?.id
+              ? `Update ${data?.name} category information.`
+              : " Lets create a category. You can edit category later from the categories table or the category page."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="image"
@@ -127,18 +146,14 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
                         type="profile"
                         value={field.value.map((image) => image.url)}
                         disabled={isLoading}
-                        onChange={(url) => {
-                          console.log("Image changed:", url);
-                          field.onChange([{ url }]);
-                        }}
-                        onRemove={(url) => {
-                          console.log("Image removed:", url);
+                        onChange={(url) => field.onChange([{ url }])}
+                        onRemove={(url) =>
                           field.onChange([
                             ...field.value.filter(
                               (current) => current.url !== url
                             ),
-                          ]);
-                        }}
+                          ])
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -146,34 +161,28 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
                 )}
               />
               <FormField
+                disabled={isLoading}
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Category Name</FormLabel>
+                    <FormLabel>Category name</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Name" 
-                        {...field} 
-                        required
-                      />
+                      <Input placeholder="Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
+                disabled={isLoading}
                 control={form.control}
                 name="url"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Category Url</FormLabel>
+                    <FormLabel>Category url</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="/category-url" 
-                        {...field}
-                        required
-                      />
+                      <Input placeholder="/category-url" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,6 +196,7 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
+                        // @ts-ignore
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
@@ -199,19 +209,18 @@ const CategoryDetails:FC<CategoryDetailsProps> = ({
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLoading} className="cursor-pointer">
+              <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? "Loading.."
+                  ? "loading..."
                   : data?.id
-                  ? "Save Category Information"
-                  : "Create Category"
-                }
+                  ? "Save category information"
+                  : "Create category"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
-    </AlertDescription>
+    </AlertDialog>
   );
 };
 

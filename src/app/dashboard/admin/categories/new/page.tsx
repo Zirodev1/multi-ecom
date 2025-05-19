@@ -1,14 +1,9 @@
-import CategoryDetails from '@/components/dashboard/forms/category-details'
-import React from 'react'
+import CategoryDetails from "@/components/dashboard/forms/category-details";
 
 export default function AdminNewCategoryPage() {
-  const CLOUDINARY_CLOUD_KEY = process.env.CLOUDINARY_URL
-
-  if(!CLOUDINARY_CLOUD_KEY) return null;
-
   return (
-    <div className='w-full'>
-      <CategoryDetails cloudinary_key={CLOUDINARY_CLOUD_KEY} />
+    <div className="w-full">
+      <CategoryDetails />
     </div>
-  )
+  );
 }
