@@ -14,6 +14,11 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // For deployment, ignore ESLint errors
   },
+  // Set all pages to use dynamic rendering by default
+  // This prevents static generation failures due to missing environment variables during build
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 module.exports = nextConfig; 

@@ -15,6 +15,9 @@ import Image from "next/image";
 import FeaturedCategories from "@/components/store/home/featured-categories";
 import ProductCard from "@/components/store/cards/product/product-card";
 
+// Set dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Create fallback data in case database connection fails
   let products = [];
