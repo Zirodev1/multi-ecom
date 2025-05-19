@@ -7,12 +7,25 @@ import { Plus } from "lucide-react";
 import CategoryDetails from "@/components/dashboard/forms/category-details";
 import { columns } from "./columns";
 
-export default async function AdminCategoriesPage() {
-  // Fetching stores data from the database
-  const categories = await getAllCategories();
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
-  // Checking if no categories are found
-  if (!categories) return null; // If no categories found, return null
+export default async function AdminCategoriesPage() {
+  // Create empty array for categories
+  let categories = [];
+  
+  try {
+    // Fetching categories data from the database
+    const categoriesData = await getAllCategories();
+    
+    // If we got data, use it
+    if (categoriesData) {
+      categories = categoriesData;
+    }
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    // Continue with empty array
+  }
 
   return (
     <DataTable

@@ -14,10 +14,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // For deployment, ignore ESLint errors
   },
-  // Set all pages to use dynamic rendering by default
-  // This prevents static generation failures due to missing environment variables during build
+  // Set SSG mode to false to prevent static generation failures during build
   experimental: {
-    missingSuspenseWithCSRBailout: false,
+    // Disable static generation for pages that should be dynamic
+    incrementalCacheHandlerPath: false,
   },
 };
 
