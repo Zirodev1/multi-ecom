@@ -22,14 +22,14 @@ model User {
   role    Role   @default(USER)
 
   stores            Store[]           @relation("UserStores")
-  following         Store[]           @relation("UserFollowingStore")
+  following         StoreFollowers[]  @relation("UserFollowing")
   reviews           Review[]          @relation("ReviewToUser")
   cart              Cart?             @relation("UserCart")
   shippingAddresses ShippingAddress[] @relation("UserShippingAddresses")
   orders            Order[]           @relation("UserOrders")
   wishlist          Wishlist[]        @relation("WishlistToUser")
-  payments PaymentDetails[]  @relation("PaymentDetailsToUser")
-  coupons Coupon[]  @relation("CouponToUser")
+  payments          PaymentDetails[]  @relation("PaymentDetailsToUser")
+  userCoupons       UserCoupon[]      @relation("UserToCoupon")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,7 +86,7 @@ model Store {
   cover                               String
   status                              StoreStatus @default(PENDING)
   averageRating                       Float       @default(0)
-  numReviews                          Int       @default(0)
+  numReviews                          Int         @default(0)
   featured                            Boolean     @default(false)
   returnPolicy                        String      @default("Return in 30 days.")
   defaultShippingService              String      @default("International Delivery")
@@ -103,14 +103,31 @@ model Store {
   userId String
   user   User   @relation("UserStores", fields: [userId], references: [id])
 
-  products      Product[]      @relation("StoreToProduct")
-  shippingRates ShippingRate[] @relation("StoreShippingRates")
-  followers     User[]         @relation("UserFollowingStore")
-  cartItems     CartItem[]     @relation("CartItemToStore")
-  orderGroups   OrderGroup[]   @relation("OrderGroupToStore")
-  coupons Coupon[] @relation("CouponToStore")
+  products      Product[]        @relation("StoreToProduct")
+  shippingRates ShippingRate[]   @relation("StoreShippingRates")
+  followers     StoreFollowers[] @relation("StoreFollowers")
+  cartItems     CartItem[]       @relation("CartItemToStore")
+  orderGroups   OrderGroup[]     @relation("OrderGroupToStore")
+  coupons       Coupon[]         @relation("CouponToStore")
 
   @@index([userId])
+}
+
+// Explicit junction table for User-Store following relationship
+model StoreFollowers {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation("UserFollowing", fields: [userId], references: [id], onDelete: Cascade)
+
+  storeId String
+  store   Store  @relation("StoreFollowers", fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
 }
 
 enum ShippingFeeMethod {
@@ -120,18 +137,18 @@ enum ShippingFeeMethod {
 }
 
 model Product {
-  id                String            @id @default(uuid())
-  name              String
-  description       String            @db.LongText
-  slug              String            @unique
-  brand             String
-  rating            Float             @default(0)
-  sales             Int               @default(0)
-  numReviews        Int               @default(0)
-  shippingFeeMethod ShippingFeeMethod @default(ITEM)
-  views  Int @default(0)
-  freeShipping FreeShipping? @relation("ProductFreeShipping")
-  freeShippingForAllCountries Boolean @default(false)
+  id                          String            @id @default(uuid())
+  name                        String
+  description                 String            @db.LongText
+  slug                        String            @unique
+  brand                       String
+  rating                      Float             @default(0)
+  sales                       Int               @default(0)
+  numReviews                  Int               @default(0)
+  shippingFeeMethod           ShippingFeeMethod @default(ITEM)
+  views                       Int               @default(0)
+  freeShipping                FreeShipping?     @relation("ProductFreeShipping")
+  freeShippingForAllCountries Boolean           @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -238,7 +255,7 @@ model Color {
 model OfferTag {
   id   String @id @default(uuid())
   name String
-  url  String  @unique
+  url  String @unique
 
   products Product[] @relation("OfferTagToProduct")
 
@@ -345,15 +362,15 @@ model FreeShippingCountry {
 }
 
 model Review {
-  id       String @id @default(uuid())
-  variant  String
+  id           String @id @default(uuid())
+  variant      String
   variantImage String
-  review   String
-  rating   Float
-  color    String
-  size     String
-  quantity String
-  likes    Int    @default(0)
+  review       String
+  rating       Float
+  color        String
+  size         String
+  quantity     String
+  likes        Int    @default(0)
 
   images ReviewImage[] @relation("ReviewToReviewImage")
 
@@ -369,7 +386,6 @@ model Review {
   @@index([userId])
   @@index([productId])
 }
-
 
 model ReviewImage {
   id  String @id @default(uuid())
@@ -390,9 +406,8 @@ model Cart {
   userId String @unique
   user   User   @relation("UserCart", fields: [userId], references: [id], onDelete: Cascade)
 
-
   couponId String?
-  coupon Coupon? @relation("CouponToCart",fields: [couponId],references: [id])
+  coupon   Coupon? @relation("CouponToCart", fields: [couponId], references: [id])
 
   cartItems    CartItem[] @relation("CartToCartItem")
   shippingFees Float      @default(0)
@@ -539,9 +554,8 @@ model OrderGroup {
   storeId String
   store   Store  @relation("OrderGroupToStore", fields: [storeId], references: [id])
 
-
   couponId String?
-  coupon   Coupon?  @relation("CouponToOrderGroup", fields: [couponId], references: [id])
+  coupon   Coupon? @relation("CouponToOrderGroup", fields: [couponId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -616,7 +630,6 @@ model OrderItem {
   orderGroupId String
   orderGroup   OrderGroup @relation("OrderItemToGroup", fields: [orderGroupId], references: [id], onDelete: Cascade)
 
-
   status ProductStatus @default(Pending)
 
   createdAt DateTime @default(now())
@@ -649,53 +662,58 @@ model Wishlist {
   @@index([sizeId])
 }
 
-
 model Coupon {
-  id String @id @default(uuid())
-  code String @unique
+  id        String @id @default(uuid())
+  code      String @unique
   startDate String
-  endDate String
-  discount Int
-
+  endDate   String
+  discount  Int
 
   storeId String
-  store Store @relation("CouponToStore",fields: [storeId],references: [id],onDelete: Cascade) 
+  store   Store  @relation("CouponToStore", fields: [storeId], references: [id], onDelete: Cascade)
 
-
-  orders OrderGroup[]   @relation("CouponToOrderGroup")
-  users User[]  @relation("CouponToUser")
-
+  orders      OrderGroup[] @relation("CouponToOrderGroup")
+  userCoupons UserCoupon[] @relation("CouponToUser")
 
   carts Cart[] @relation("CouponToCart")
-
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-
   @@index([storeId])
-
 }
 
+// Explicit junction table for User-Coupon relationship
+model UserCoupon {
+  id String @id @default(uuid())
 
+  userId String
+  user   User   @relation("UserToCoupon", fields: [userId], references: [id], onDelete: Cascade)
+
+  couponId String
+  coupon   Coupon @relation("CouponToUser", fields: [couponId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, couponId])
+  @@index([userId])
+  @@index([couponId])
+}
 
 model PaymentDetails {
-  
   id String @id @default(uuid())
 
   paymentInetntId String
-  paymentMethod String
-  status String
-  amount Float
-  currency String
-
+  paymentMethod   String
+  status          String
+  amount          Float
+  currency        String
 
   orderId String @unique
-  order Order @relation("PaymentDetailsToOrder",fields: [orderId],references: [id],onDelete: Cascade) 
+  order   Order  @relation("PaymentDetailsToOrder", fields: [orderId], references: [id], onDelete: Cascade)
 
   userId String
-  user User @relation("PaymentDetailsToUser",fields: [userId],references: [id],onDelete: Cascade)
-
+  user   User   @relation("PaymentDetailsToUser", fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -77,6 +77,8 @@
     "react-content-loader": "^7.0.2",
     "react-datetime-picker": "^6.0.1",
     "react-day-picker": "^9.7.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.4",
     "react-hot-toast": "^2.4.1",
@@ -116,5 +118,25 @@
     "prisma": "^6.8.2",
     "tailwindcss": "3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@tremor/react": {
+      "react": "^19.1.0",
+      "react-dom": "^19.1.0"
+    },
+    "react-multi-select-component": {
+      "react": "^19.1.0",
+      "react-dom": "^19.1.0"
+    },
+    "react-tag-input": {
+      "react": "^19.1.0",
+      "react-dom": "^19.1.0"
+    },
+    "react-dnd": {
+      "react": "^19.1.0"
+    },
+    "react-dnd-html5-backend": {
+      "react": "^19.1.0"
+    }
   }
 }
