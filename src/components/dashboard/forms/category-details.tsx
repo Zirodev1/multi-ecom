@@ -1,7 +1,7 @@
 "use client";
 
 // React
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 
 // Prisma model
 import { Category } from "@prisma/client";
@@ -53,6 +53,9 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
   // Initializing necessary hooks
   const { toast } = useToast(); // Hook for displaying toast messages
   const router = useRouter(); // Hook for routing
+  const [debugValues, setDebugValues] = useState<any>(null);
+  const [formName, setFormName] = useState<string>(data?.name || "");
+  const [formUrl, setFormUrl] = useState<string>(data?.url || "");
 
   // Form hook for managing form state and validation
   const form = useForm<z.infer<typeof CategoryFormSchema>>({
@@ -60,12 +63,26 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
     resolver: zodResolver(CategoryFormSchema), // Resolver for form validation
     defaultValues: {
       // Setting default form values from data (if available)
-      name: data?.name,
+      name: data?.name || "",
       image: data?.image ? [{ url: data?.image }] : [],
-      url: data?.url,
-      featured: data?.featured,
+      url: data?.url || "",
+      featured: data?.featured || false,
     },
   });
+
+  // Output form values for debugging
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      console.log("Form values updated:", value);
+      setDebugValues(value);
+      
+      // Keep local state in sync
+      if (value.name !== undefined) setFormName(value.name);
+      if (value.url !== undefined) setFormUrl(value.url);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Loading status based on form submission
   const isLoading = form.formState.isSubmitting;
@@ -79,22 +96,75 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
         url: data?.url,
         featured: data?.featured,
       });
+      setFormName(data?.name || "");
+      setFormUrl(data?.url || "");
     }
   }, [data, form]);
 
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
     try {
-      // Upserting category data
-      const response = await upsertCategory({
+      // Debug form state
+      console.log("Form state:", form.getValues());
+      console.log("Form errors:", form.formState.errors);
+      console.log("Form values received in handleSubmit:", values);
+      
+      // Debug object structure
+      console.log("Name field:", values.name);
+      console.log("Type of name:", typeof values.name);
+      console.log("Name length:", values.name?.length);
+      
+      // Get values from local state as fallback
+      const name = values.name || formName;
+      const url = values.url || formUrl;
+      
+      console.log("Using name:", name);
+      console.log("Using url:", url);
+      
+      if (!values.image || values.image.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Image Required",
+          description: "Please upload a category image.",
+        });
+        return;
+      }
+
+      if (!name || name.trim() === '') {
+        toast({
+          variant: "destructive",
+          title: "Name Required",
+          description: "Please enter a category name.",
+        });
+        return;
+      }
+
+      if (!url || url.trim() === '') {
+        toast({
+          variant: "destructive",
+          title: "URL Required",
+          description: "Please enter a category URL.",
+        });
+        return;
+      }
+      
+      console.log("Form values before submission:", values);
+      
+      // Create category object with explicit name field
+      const categoryData = {
         id: data?.id ? data.id : v4(),
-        name: values.name,
+        name: name.trim(),
+        url: url.trim(),
         image: values.image[0].url,
-        url: values.url,
-        featured: values.featured,
-        createdAt: new Date(),
+        featured: values.featured || false,
+        createdAt: data?.createdAt || new Date(),
         updatedAt: new Date(),
-      });
+      };
+      
+      console.log("Category data being submitted:", categoryData);
+      
+      // Upserting category data
+      const response = await upsertCategory(categoryData);
 
       // Displaying success message
       toast({
@@ -111,10 +181,12 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
       }
     } catch (error: any) {
       // Handling form submission errors
+      console.error("Category creation error:", error);
+      
       toast({
         variant: "destructive",
-        title: "Oops!",
-        description: error.toString(),
+        title: "Error Saving Category",
+        description: error.message || "There was a problem creating the category. Please try again.",
       });
     }
   };
@@ -131,6 +203,16 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Debug section - only visible during development */}
+          {process.env.NODE_ENV === 'development' && debugValues && (
+            <div className="mb-4 p-2 bg-gray-100 text-xs rounded">
+              <p>Debug - Current Form Values:</p>
+              <pre>{JSON.stringify(debugValues, null, 2)}</pre>
+              <p>Local state:</p>
+              <pre>{JSON.stringify({ name: formName, url: formUrl }, null, 2)}</pre>
+            </div>
+          )}
+          
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
@@ -141,6 +223,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                 name="image"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Category Image</FormLabel>
                     <FormControl>
                       <ImageUpload
                         type="profile"
@@ -168,7 +251,16 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                   <FormItem className="flex-1">
                     <FormLabel>Category name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Name" {...field} />
+                      <Input 
+                        placeholder="Name" 
+                        {...field} 
+                        value={field.value || formName}
+                        onChange={(e) => {
+                          console.log("Name field changed:", e.target.value);
+                          setFormName(e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +274,15 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                   <FormItem className="flex-1">
                     <FormLabel>Category url</FormLabel>
                     <FormControl>
-                      <Input placeholder="/category-url" {...field} />
+                      <Input 
+                        placeholder="/category-url" 
+                        {...field}
+                        value={field.value || formUrl}
+                        onChange={(e) => {
+                          setFormUrl(e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -196,7 +296,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        // @ts-ignore
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>

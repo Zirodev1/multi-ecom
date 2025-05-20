@@ -12,14 +12,14 @@ export default function Contact() {
             <span className="text-[#59645f] text-sm">
               Got Questions ? Call us 24/7!
             </span>
-            <span className="text-xl">(800) 9213-6472 , (800) 7324-1859</span>
+            <span className="text-xl">(123) 123-1234 , (123) 123-1234</span>
           </div>
         </div>
       </div>
       <div className="flex flex-col">
         <b>Contact Info</b>
         <span className="text-sm">
-          1357 Maple Grove Avenue, Springfield, IL 62704, USA
+          Some street address, county, St 11111, USA
         </span>
         <div className="flex flex-wap gap-2 mt-4">
           <SocialLogo

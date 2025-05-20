@@ -21,16 +21,42 @@ export const upsertCategory = async (category: Category) => {
     const user = await currentUser();
 
     // Ensure user is authenticated
-    if (!user) throw new Error("Unauthenticated.");
+    if (!user) {
+      console.error("Unauthenticated user attempted to create a category");
+      throw new Error("Unauthenticated. Please sign in to continue.");
+    }
 
-    // Verify admin permission
-    if (user.privateMetadata.role !== "ADMIN")
+    // Check for role in privateMetadata
+    const userRole = user.privateMetadata?.role as string || "";
+    
+    // Verify admin permission with more detailed error handling
+    if (userRole !== "ADMIN") {
+      console.error(`User ${user.id} with role ${userRole} attempted to create a category`);
       throw new Error(
         "Unauthorized Access: Admin Privileges Required for Entry."
       );
+    }
 
     // Ensure category data is provided
     if (!category) throw new Error("Please provide category data.");
+
+    // Ensure name is provided
+    if (!category.name) throw new Error("Category name is required");
+    
+    // Ensure url is provided
+    if (!category.url) throw new Error("Category URL is required");
+    
+    // Ensure image is provided
+    if (!category.image) throw new Error("Category image is required");
+
+    // Log the category data being received
+    console.log("Category data received:", {
+      id: category.id,
+      name: category.name,
+      url: category.url,
+      image: category.image,
+      featured: category.featured,
+    });
 
     // Throw error if category with same name or URL already exists
     const existingCategory = await db.category.findFirst({
@@ -59,18 +85,34 @@ export const upsertCategory = async (category: Category) => {
       throw new Error(errorMessage);
     }
 
+    // Explicitly prepare data for both update and create operations
+    const categoryData = {
+      name: category.name,
+      url: category.url,
+      image: category.image,
+      featured: category.featured ?? false,
+      updatedAt: new Date(),
+    };
+
     // Upsert category into the database
     const categoryDetails = await db.category.upsert({
       where: {
         id: category.id,
       },
-      update: category,
-      create: category,
+      update: categoryData,
+      create: {
+        ...categoryData,
+        id: category.id,
+        createdAt: category.createdAt || new Date(),
+      },
     });
+    
     return categoryDetails;
-  } catch (error) {
-    // Log and re-throw any errors
-    throw error;
+  } catch (error: any) {
+    // Log detailed error information
+    console.error("Error in upsertCategory:", error.message);
+    // Re-throw with clear message
+    throw new Error(`Failed to save category: ${error.message}`);
   }
 };
 
@@ -159,26 +201,34 @@ export const getCategory = async (categoryId: string) => {
 //   - categoryId: The ID of the category to be deleted.
 // Returns: Response indicating success or failure of the deletion operation.
 export const deleteCategory = async (categoryId: string) => {
-  // Get current user
-  const user = await currentUser();
+  try {
+    // Get current user
+    const user = await currentUser();
 
-  // Check if user is authenticated
-  if (!user) throw new Error("Unauthenticated.");
+    // Check if user is authenticated
+    if (!user) throw new Error("Unauthenticated.");
 
-  // Verify admin permission
-  if (user.privateMetadata.role !== "ADMIN")
-    throw new Error(
-      "Unauthorized Access: Admin Privileges Required for Entry."
-    );
+    // Check for role in privateMetadata
+    const userRole = user.privateMetadata?.role as string || "";
+    
+    // Verify admin permission
+    if (userRole !== "ADMIN")
+      throw new Error(
+        "Unauthorized Access: Admin Privileges Required for Entry."
+      );
 
-  // Ensure category ID is provided
-  if (!categoryId) throw new Error("Please provide category ID.");
+    // Ensure category ID is provided
+    if (!categoryId) throw new Error("Please provide category ID.");
 
-  // Delete category from the database
-  const response = await db.category.delete({
-    where: {
-      id: categoryId,
-    },
-  });
-  return response;
+    // Delete category from the database
+    const response = await db.category.delete({
+      where: {
+        id: categoryId,
+      },
+    });
+    return response;
+  } catch (error: any) {
+    console.error("Error in deleteCategory:", error.message);
+    throw new Error(`Failed to delete category: ${error.message}`);
+  }
 };

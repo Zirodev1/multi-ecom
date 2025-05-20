@@ -8,11 +8,7 @@ import { Country } from "@/lib/types";
 import CountryLanguageCurrencySelector from "./country-lang-curr-selector";
 
 export default async function Header() {
-  // Get cookies from the store
-  const cookieStore = cookies();
-  const userCountryCookie = await cookieStore.get("userCountry");
-
-  // Set default country if cookie is missing
+  // Set default country
   let userCountry: Country = {
     name: "United States",
     city: "",
@@ -20,9 +16,18 @@ export default async function Header() {
     region: "",
   };
 
-  // If cookie exists, update the user country
-  if (userCountryCookie) {
-    userCountry = JSON.parse(userCountryCookie.value) as Country;
+  try {
+    // Get cookies from the store with proper await
+    const cookieStore = await cookies();
+    const userCountryCookie = cookieStore.get("userCountry");
+
+    // If cookie exists, update the user country
+    if (userCountryCookie?.value) {
+      userCountry = JSON.parse(userCountryCookie.value) as Country;
+    }
+  } catch (error) {
+    console.error("Error parsing country cookie:", error);
+    // Continue with default country if there's an error
   }
 
   return (

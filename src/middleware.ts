@@ -1,58 +1,36 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { geolocation } from "@vercel/functions";
-import countries from "@/data/countries.json";
-import { Country } from "./lib/types";
-export default clerkMiddleware(async (auth, req, next) => {
-  const protectedRoutes = createRouteMatcher([
-    "/dashboard",
-    "/dashboard/(.*)",
-    "/checkout",
-    "/profile",
-    "/profile/(.*)",
-  ]);
 
-  if (protectedRoutes(req)) {
-    await auth.protect();
-  }
-  // Creating a basic response
-  let response = NextResponse.next();
+// Configure public routes
+const publicRoutes = [
+  "/",
+  "/(.*)/product/(.*)",
+  "/browse(.*)",
+  "/cart",
+  "/checkout",
+  "/profile",
+  "/products/(.*)",
+  "/api/webhook(.*)",
+  "/api/search-products(.*)",
+  "/dashboard/signin",
+];
 
-  /*---------Handle Country detection----------*/
-  // Step 1: Check if country is already set in cookies
-  const countryCookie = req.cookies.get("userCountry");
+export default clerkMiddleware((auth, req) => {
+  // Check if the request is for a public route
+  const isPublic = publicRoutes.some((pattern) => {
+    const matcher = createRouteMatcher(pattern);
+    return matcher(req);
+  });
 
-  const DEFAULT_COUNTRY: Country = {
-    name: "United States",
-    code: "US",
-    city: "",
-    region: "",
-  };
-
-  if (countryCookie) {
-    // If the user has already selected a country, use that for subsequent requests
-    response = NextResponse.next();
-  } else {
-    // Step 2: Get the user country using the helper function
-    const geo = geolocation(req);
-    let userCountry = {
-      name:
-        countries.find((c) => c.code === geo.country)?.name ||
-        DEFAULT_COUNTRY.name,
-      code: geo.country || DEFAULT_COUNTRY.code,
-      city: geo.city || DEFAULT_COUNTRY.city,
-      region: geo.region || DEFAULT_COUNTRY.region,
-    };
-    response.cookies.set("userCountry", JSON.stringify(userCountry), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+  // For all other routes, protect them
+  if (!isPublic) {
+    const authState = auth.protect();
+    return authState.redirectToSignIn ? NextResponse.redirect(new URL('/dashboard/signin', req.url)) : NextResponse.next();
   }
 
-  return response;
+  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };

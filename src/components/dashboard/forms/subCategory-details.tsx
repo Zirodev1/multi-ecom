@@ -1,7 +1,7 @@
 "use client";
 
 // React
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 
 // Prisma model
 import { Category, SubCategory } from "@prisma/client";
@@ -64,6 +64,12 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
   // Initializing necessary hooks
   const { toast } = useToast(); // Hook for displaying toast messages
   const router = useRouter(); // Hook for routing
+  
+  // Local state for form values
+  const [formName, setFormName] = useState<string>(data?.name || "");
+  const [formUrl, setFormUrl] = useState<string>(data?.url || "");
+  const [formCategoryId, setFormCategoryId] = useState<string>(data?.categoryId || "");
+  const [debugValues, setDebugValues] = useState<any>(null);
 
   // Form hook for managing form state and validation
   const form = useForm<z.infer<typeof SubCategoryFormSchema>>({
@@ -71,18 +77,31 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
     resolver: zodResolver(SubCategoryFormSchema), // Resolver for form validation
     defaultValues: {
       // Setting default form values from data (if available)
-      name: data?.name,
+      name: data?.name || "",
       image: data?.image ? [{ url: data?.image }] : [],
-      url: data?.url,
-      featured: data?.featured,
-      categoryId: data?.categoryId,
+      url: data?.url || "",
+      featured: data?.featured || false,
+      categoryId: data?.categoryId || "",
     },
   });
 
   // Loading status based on form submission
   const isLoading = form.formState.isSubmitting;
 
-  const formData = form.watch();
+  // Watch form values for changes
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      console.log("Form values updated:", value);
+      setDebugValues(value);
+      
+      // Keep local state in sync
+      if (value.name !== undefined) setFormName(value.name);
+      if (value.url !== undefined) setFormUrl(value.url);
+      if (value.categoryId !== undefined) setFormCategoryId(value.categoryId);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Reset form values when data changes
   useEffect(() => {
@@ -94,6 +113,9 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
         featured: data?.featured,
         categoryId: data.categoryId,
       });
+      setFormName(data?.name || "");
+      setFormUrl(data?.url || "");
+      setFormCategoryId(data.categoryId || "");
     }
   }, [data, form]);
 
@@ -102,17 +124,72 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
     values: z.infer<typeof SubCategoryFormSchema>
   ) => {
     try {
-      // Upserting category data
-      const response = await upsertSubCategory({
+      // Debug form state
+      console.log("Form state:", form.getValues());
+      console.log("Form errors:", form.formState.errors);
+      console.log("Form values received in handleSubmit:", values);
+      
+      // Get values from local state as fallback
+      const name = values.name || formName;
+      const url = values.url || formUrl;
+      const categoryId = values.categoryId || formCategoryId;
+      
+      console.log("Using name:", name);
+      console.log("Using url:", url);
+      console.log("Using categoryId:", categoryId);
+      
+      if (!values.image || values.image.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Image Required",
+          description: "Please upload a subcategory image.",
+        });
+        return;
+      }
+
+      if (!name || name.trim() === '') {
+        toast({
+          variant: "destructive",
+          title: "Name Required",
+          description: "Please enter a subcategory name.",
+        });
+        return;
+      }
+
+      if (!url || url.trim() === '') {
+        toast({
+          variant: "destructive",
+          title: "URL Required",
+          description: "Please enter a subcategory URL.",
+        });
+        return;
+      }
+      
+      if (!categoryId) {
+        toast({
+          variant: "destructive",
+          title: "Category Required",
+          description: "Please select a parent category.",
+        });
+        return;
+      }
+      
+      // Create subcategory data object
+      const subcategoryData = {
         id: data?.id ? data.id : v4(),
-        name: values.name,
+        name: name.trim(),
         image: values.image[0].url,
-        url: values.url,
-        featured: values.featured,
-        categoryId: values.categoryId,
-        createdAt: new Date(),
+        url: url.trim(),
+        featured: values.featured || false,
+        categoryId: categoryId,
+        createdAt: data?.createdAt || new Date(),
         updatedAt: new Date(),
-      });
+      };
+      
+      console.log("Subcategory data being submitted:", subcategoryData);
+
+      // Upserting subcategory data
+      const response = await upsertSubCategory(subcategoryData);
 
       // Displaying success message
       toast({
@@ -129,10 +206,12 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
       }
     } catch (error: any) {
       // Handling form submission errors
+      console.error("SubCategory creation error:", error);
+      
       toast({
         variant: "destructive",
-        title: "Oops!",
-        description: error.toString(),
+        title: "Error Saving SubCategory",
+        description: error.message || "There was a problem creating the subcategory. Please try again.",
       });
     }
   };
@@ -149,6 +228,16 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Debug section - only visible during development */}
+          {process.env.NODE_ENV === 'development' && debugValues && (
+            <div className="mb-4 p-2 bg-gray-100 text-xs rounded">
+              <p>Debug - Current Form Values:</p>
+              <pre>{JSON.stringify(debugValues, null, 2)}</pre>
+              <p>Local state:</p>
+              <pre>{JSON.stringify({ name: formName, url: formUrl, categoryId: formCategoryId }, null, 2)}</pre>
+            </div>
+          )}
+          
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
@@ -159,6 +248,7 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                 name="image"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>SubCategory Image</FormLabel>
                     <FormControl>
                       <ImageUpload
                         type="profile"
@@ -186,7 +276,16 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                   <FormItem className="flex-1">
                     <FormLabel>SubCategory name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Name" {...field} />
+                      <Input 
+                        placeholder="Name" 
+                        {...field} 
+                        value={field.value || formName}
+                        onChange={(e) => {
+                          console.log("Name field changed:", e.target.value);
+                          setFormName(e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -200,7 +299,15 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                   <FormItem className="flex-1">
                     <FormLabel>SubCategory url</FormLabel>
                     <FormControl>
-                      <Input placeholder="/subCategory-url" {...field} />
+                      <Input 
+                        placeholder="/subCategory-url" 
+                        {...field} 
+                        value={field.value || formUrl}
+                        onChange={(e) => {
+                          setFormUrl(e.target.value);
+                          field.onChange(e);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,14 +322,16 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                     <FormLabel>Category</FormLabel>
                     <Select
                       disabled={isLoading || categories.length == 0}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      defaultValue={field.value}
+                      onValueChange={(value) => {
+                        setFormCategoryId(value);
+                        field.onChange(value);
+                      }}
+                      value={field.value || formCategoryId}
+                      defaultValue={field.value || formCategoryId}
                     >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue
-                            defaultValue={field.value}
                             placeholder="Select a category"
                           />
                         </SelectTrigger>
@@ -247,7 +356,6 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        // @ts-ignore
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
