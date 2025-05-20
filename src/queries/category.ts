@@ -202,31 +202,31 @@ export const getCategory = async (categoryId: string) => {
 // Returns: Response indicating success or failure of the deletion operation.
 export const deleteCategory = async (categoryId: string) => {
   try {
-    // Get current user
-    const user = await currentUser();
+  // Get current user
+  const user = await currentUser();
 
-    // Check if user is authenticated
-    if (!user) throw new Error("Unauthenticated.");
+  // Check if user is authenticated
+  if (!user) throw new Error("Unauthenticated.");
 
     // Check for role in privateMetadata
     const userRole = user.privateMetadata?.role as string || "";
-    
-    // Verify admin permission
+
+  // Verify admin permission
     if (userRole !== "ADMIN")
-      throw new Error(
-        "Unauthorized Access: Admin Privileges Required for Entry."
-      );
+    throw new Error(
+      "Unauthorized Access: Admin Privileges Required for Entry."
+    );
 
-    // Ensure category ID is provided
-    if (!categoryId) throw new Error("Please provide category ID.");
+  // Ensure category ID is provided
+  if (!categoryId) throw new Error("Please provide category ID.");
 
-    // Delete category from the database
-    const response = await db.category.delete({
-      where: {
-        id: categoryId,
-      },
-    });
-    return response;
+  // Delete category from the database
+  const response = await db.category.delete({
+    where: {
+      id: categoryId,
+    },
+  });
+  return response;
   } catch (error: any) {
     console.error("Error in deleteCategory:", error.message);
     throw new Error(`Failed to delete category: ${error.message}`);

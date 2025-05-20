@@ -6,13 +6,13 @@ let client: Client;
 // Only initialize the real client if both env variables are properly set
 if (process.env.ELASTICSEARCH_CLOUD_ID && process.env.ELASTICSEARCH_API_KEY) {
   client = new Client({
-    cloud: {
+  cloud: {
       id: process.env.ELASTICSEARCH_CLOUD_ID,
-    },
-    auth: {
+  },
+  auth: {
       apiKey: process.env.ELASTICSEARCH_API_KEY,
-    },
-  });
+  },
+});
 } else {
   // Create a mock client that will gracefully fail
   client = {

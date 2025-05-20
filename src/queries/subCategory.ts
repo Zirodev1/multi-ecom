@@ -181,3 +181,24 @@ export const getSubcategories = async (
     throw error;
   }
 };
+
+// Function: getFeaturedSubCategories
+// Description: Retrieves featured subcategories for display in navigation
+// Permission Level: Public
+// Returns: Array of featured subcategories sorted by name
+export const getFeaturedSubCategories = async (limit: number = 10) => {
+  // Retrieve featured subcategories from the database
+  const featuredSubCategories = await db.subCategory.findMany({
+    where: {
+      featured: true,
+    },
+    include: {
+      category: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+    take: limit,
+  });
+  return featuredSubCategories;
+};
