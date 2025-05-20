@@ -11,7 +11,7 @@ export default async function MinimalHeader() {
       <div className="mx-auto px-6">
         <div className="relative flex items-center justify-between py-2">
           <Link href="/" >
-            <h1 className="font-extrabold text-2xl font-mono">GoShop</h1>
+            <h1 className="font-extrabold text-2xl font-mono">ZShop</h1>
           </Link>
           <div className="flex items-center gap-x-5">
             <div className="flex items-center gap-x-1">
