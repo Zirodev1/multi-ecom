@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function ProductAssurancePolicy() {
   return (
     <div className="mt-4">
-      <h3 className="text-main-primary">GoShop assurance</h3>
+      <h3 className="text-main-primary">ZShop assurance</h3>
       <Link
         href=""
         className="text-main-primary flex items-center mt-3 text-sm"

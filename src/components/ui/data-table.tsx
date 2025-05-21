@@ -69,11 +69,11 @@ export default function DataTable<TData, TValue>({
   });
 
   return (
-    <>
+    <div className="w-full">
       {/* Search input and action button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center py-4 gap-2">
-          <Search />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto max-w-sm">
+          <Search className="shrink-0 text-gray-500" />
           <Input
             placeholder={searchPlaceholder}
             value={
@@ -82,13 +82,13 @@ export default function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn(filterValue)?.setFilterValue(event.target.value)
             }
-            className="h-12"
+            className="h-10 min-w-[200px]"
           />
         </div>
-        <div className="flex gap-x-2">
+        <div className="flex gap-x-2 self-end sm:self-auto">
           {modalChildren && (
             <Button
-              className="flex- gap-2"
+              className="flex gap-2 whitespace-nowrap"
               onClick={() => {
                 if (modalChildren)
                   setOpen(
@@ -106,16 +106,17 @@ export default function DataTable<TData, TValue>({
           )}
           {newTabLink && (
             <Link href={newTabLink} >
-              <Button variant="outline">
-                <FilePlus2 className="me-1" /> Create in new page
+              <Button variant="outline" className="whitespace-nowrap">
+                <FilePlus2 className="mr-1" /> Create in new page
               </Button>
             </Link>
           )}
         </div>
       </div>
+      
       {/* Table */}
-      <div className=" border bg-background rounded-lg">
-        <Table className="">
+      <div className="w-full border bg-background rounded-lg overflow-x-auto">
+        <Table className="w-full">
           {/* Table header */}
           {!noHeader && (
             <TableHeader>
@@ -123,7 +124,7 @@ export default function DataTable<TData, TValue>({
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead key={header.id} className="px-3 py-2">
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -150,7 +151,7 @@ export default function DataTable<TData, TValue>({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="max-w-[400px] break-words"
+                        className="px-3 py-2 max-w-[400px] break-words"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -163,18 +164,18 @@ export default function DataTable<TData, TValue>({
               })
             ) : (
               // No results message
-              (<TableRow>
+              <TableRow>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   No Results.
                 </TableCell>
-              </TableRow>)
+              </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-    </>
+    </div>
   );
 }

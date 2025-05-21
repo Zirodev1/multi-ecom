@@ -48,6 +48,9 @@ model Category {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Demo mode tracking
+  demoSessionId String?
 }
 
 model SubCategory {
@@ -64,6 +67,9 @@ model SubCategory {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Demo mode tracking
+  demoSessionId String?
 
   @@index([categoryId])
 }
@@ -109,6 +115,9 @@ model Store {
   cartItems     CartItem[]       @relation("CartItemToStore")
   orderGroups   OrderGroup[]     @relation("OrderGroupToStore")
   coupons       Coupon[]         @relation("CouponToStore")
+  
+  // Demo mode tracking
+  demoSessionId String?
 
   @@index([userId])
 }
@@ -170,6 +179,9 @@ model Product {
 
   offerTagId String?
   offerTag   OfferTag? @relation("OfferTagToProduct", fields: [offerTagId], references: [id])
+  
+  // Demo mode tracking
+  demoSessionId String?
 
   @@index([storeId])
   @@index([categoryId])

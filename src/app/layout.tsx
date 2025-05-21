@@ -26,9 +26,9 @@ const barlowFont = Barlow({
 
 // Metadata
 export const metadata: Metadata = {
-  title: "GoShop",
+  title: "ZShop",
   description:
-    "Welcome to GoShop, your ultimate destination for seamless online shopping! Discover a vast array of products from trusted sellers, all in one convenient marketplace. With GoShop, shopping is made easy, fast, and enjoyable. Find everything you need, from fashion and electronics to home essentials, and experience the joy of hassle-free online shopping. Start exploring today!",
+    "Welcome to ZShop, your ultimate destination for seamless online shopping! Discover a vast array of products from trusted sellers, all in one convenient marketplace. With ZShop, shopping is made easy, fast, and enjoyable. Find everything you need, from fashion and electronics to home essentials, and experience the joy of hassle-free online shopping. Start exploring today!",
 };
 
 export default function RootLayout({

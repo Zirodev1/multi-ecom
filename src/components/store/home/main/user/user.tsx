@@ -4,7 +4,6 @@ import Image from "next/image";
 import UserImg from "@/public/assets/images/default-user.avif";
 import Link from "next/link";
 import { Button } from "../../../ui/button";
-import MainSwiper from "../../../shared/swiper";
 import UserCardProducts from "./products";
 
 export default async function HomeUserCard({
@@ -35,7 +34,7 @@ export default async function HomeUserCard({
             />
           </div>
           <div className="absolute top-16 w-full h-5 font-bold text-black text-center cursor-pointer capitalize">
-            {user ? user.fullName?.toLowerCase() : "Welcome to GoShop"}
+            {user ? user.fullName?.toLowerCase() : "Welcome to ZShop"}
           </div>
         </div>
         {/* User links */}
@@ -97,12 +96,19 @@ export default async function HomeUserCard({
               )}
             </div>
           ) : (
-            <div className="w-full flex justify-between gap-x-4">
-              <Button variant="orange-gradient">
-                <Link href="/sign-up">Join</Link>
-              </Button>
-              <Button variant="gray">
-                <Link href="/sign-in">Sign in</Link>
+            <div className="w-full flex flex-col gap-y-2">
+              <div className="flex justify-between gap-x-4">
+                <Button variant="orange-gradient">
+                  <Link href="/sign-up">Join</Link>
+                </Button>
+                <Button variant="gray">
+                  <Link href="/sign-in">Sign in</Link>
+                </Button>
+              </div>
+              <Button variant="outline" className="w-full">
+                <Link href="/demo" className="flex items-center justify-center gap-x-2">
+                  <span className="text-xs">Try Admin/Seller Demo</span>
+                </Link>
               </Button>
             </div>
           )}

@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { SignOutButton, UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
-import { ChevronDown, UserIcon } from "lucide-react";
+import { ChevronDown, LayoutDashboard, UserIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -98,6 +98,17 @@ export default async function UserMenu() {
                 </ul>
                 <Separator className="!max-w-[257px] mx-auto" />
                 <ul className="pt-2.5 pr-4 pb-1 pl-4 w-[288px]">
+                  {/* Demo option at the top with highlight */}
+                  <li className="mb-2">
+                    <Link
+                      href="/demo"
+                      className="flex items-center gap-2 text-sm text-orange-600 font-medium py-1.5 hover:underline"
+                    >
+                      <LayoutDashboard size={16} />
+                      Try Admin/Seller Demo
+                    </Link>
+                  </li>
+                  
                   {extraLinks.map((item, i) => (
                     <li key={i}>
                       <Link

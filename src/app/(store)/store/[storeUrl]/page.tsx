@@ -14,7 +14,10 @@ export default async function StorePage({
   params: { storeUrl: string };
   searchParams: FiltersQueryType;
 }) {
-  const store = await getStorePageDetails(params.storeUrl);
+  const { storeUrl = '' } = await params;
+  const storeUrlStr = String(storeUrl);
+  
+  const store = await getStorePageDetails(storeUrlStr);
   return (
     <>
       <Header />
@@ -33,7 +36,7 @@ export default async function StorePage({
               <div className="-ml-6 md:ml-0">
                 <StoreProducts
                   searchParams={searchParams}
-                  store={params.storeUrl}
+                  store={storeUrlStr}
                 />
               </div>
             </div>
