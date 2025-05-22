@@ -103,7 +103,7 @@ const ProductReviews: FC<Props> = ({
           {/* Title */}
           <div className="h-12">
             <h2 className="text-main-primary text-2xl font-bold">
-              Custom Reviews ({statistics.totalReviews})
+              Customer Reviews ({statistics.totalReviews})
             </h2>
           </div>
           {/* Statistics */}

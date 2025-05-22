@@ -1,11 +1,36 @@
 "use client";
+import { Dispatch, SetStateAction } from "react";
+
 import Link from "next/link";
 import Image from "next/image";
-import { SimpleProduct } from "@/lib/types";
+import { ProductType, SimpleProduct } from "@/lib/types";
 
-export default function ProductCard({ product }: { product: SimpleProduct }) {
+export default function ProductCard({ 
+  product,
+  images = [],
+  activeImage = null,
+  setActiveImage = () => {},
+}: { 
+  product: SimpleProduct | ProductType
+  images?: { url: string }[];
+  activeImage?: { url: string } | null;
+  setActiveImage?: Dispatch<SetStateAction<{ url: string } | null>>;
+}) {
   // Check if this is a demo product
   const isDemoProduct = product.slug?.toString().startsWith('demo-product-');
+  
+  // Determine image source
+  const imageSource = 
+    (activeImage && activeImage.url) || 
+    (images.length > 0 && images[0].url) ||
+    (product as SimpleProduct).image ||
+    ((product as ProductType).variants && (product as ProductType).variants[0]?.images?.[0]?.url) ||
+    "/assets/images/placeholder.png";
+  
+  // Determine the product price
+  const productPrice = (product as SimpleProduct).price || 
+    ((product as ProductType).variants && (product as ProductType).variants[0]?.sizes?.[0]?.price) || 
+    0;
   
   return (
     <div className="relative">
@@ -14,10 +39,13 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
           Demo
         </div>
       )}
-      <Link href={`/product/${product.slug}`}>
-        <div className="w-[178px] h-[178px] relative">
+      <Link href={`/product/${product.slug}${(product as SimpleProduct).variantSlug ? `?variant=${(product as SimpleProduct).variantSlug}` : ''}`}>
+        <div 
+          className="w-[178px] h-[178px] relative"
+          onMouseEnter={() => images.length > 0 && setActiveImage(images[0])}
+        >
           <Image
-            src={product.image || "/assets/images/placeholder.png"}
+            src={imageSource}
             fill
             alt={product.name}
             sizes="178px"
@@ -26,14 +54,14 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
       </Link>
 
       <div className="p-2">
-        <Link href={`/product/${product.slug}`}>
+        <Link href={`/product/${product.slug}${(product as SimpleProduct).variantSlug ? `?variant=${(product as SimpleProduct).variantSlug}` : ''}`}>
           <p className="text-sm font-medium text-gray-800 h-10 overflow-hidden">
             {product.name}
           </p>
         </Link>
         <div>
           <p className="text-lg font-bold text-gray-900">
-            ₹{product.price}
+            ${typeof productPrice === 'number' ? productPrice.toFixed(2) : productPrice}
           </p>
         </div>
       </div>
