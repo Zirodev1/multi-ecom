@@ -1,93 +1,52 @@
 "use client";
-import { ProductType, VariantSimplified } from "@/lib/types";
 import Link from "next/link";
-import { useState } from "react";
-import ReactStars from "react-rating-stars-component";
-import ProductCardImageSwiper from "./swiper";
-import VariantSwitcher from "./variant-switcher";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/store/ui/button";
-import { Heart } from "lucide-react";
-import ProductPrice from "../../product-page/product-info/product-price";
-import { addToWishlist } from "@/queries/user";
-import toast from "react-hot-toast";
+import Image from "next/image";
+import { SimpleProduct } from "@/lib/types";
 
-export default function ProductCard({ product }: { product: ProductType }) {
-  const { name, slug, rating, sales, variantImages, variants, id } = product;
-  const [variant, setVariant] = useState<VariantSimplified>(variants[0]);
-  const { variantSlug, variantName, images, sizes } = variant;
-
-  const handleaddToWishlist = async () => {
-    try {
-      const res = await addToWishlist(id, variant.variantId);
-      if (res) toast.success("Product successfully added to wishlist.");
-    } catch (error: any) {
-      toast.error(error.toString());
-    }
-  };
-
+export default function ProductCard({ product }: { product: SimpleProduct }) {
+  // Check if this is a demo product
+  const isDemoProduct = product.slug?.toString().startsWith('demo-product-');
+  
   return (
-    <div>
-      <div
-        className={cn(
-          "group w-[190px] min-[480px]:w-[225px] relative transition-all duration-75 bg-white ease-in-out p-4 rounded-t-3xl border border-transparent hover:shadow-xl hover:border-border",
-          {
-            "": true,
-          }
-        )}
-      >
-        <div className="relative w-full h-full">
-          <Link
-            href={`/product/${slug}?variant=${variantSlug}`}
-            className="w-full relative inline-block overflow-hidden"
-            >
-            {/* Images Swiper */}
-            <ProductCardImageSwiper images={images} />
-            {/* Title */}
-            <div className="text-sm text-main-primary h-[18px] overflow-hidden overflow-ellipsis line-clamp-1">
-              {name} · {variantName}
-            </div>
-            {/* Rating - Sales */}
-            {product.rating > 0 && product.sales > 0 && (
-              <div className="flex items-center gap-x-1 h-5">
-                <ReactStars
-                  count={5}
-                  size={24}
-                  color="#F5F5F5"
-                  activeColor="#FFD804"
-                  value={rating}
-                  isHalf
-                  edit={false}
-                />
-                <div className="text-xs text-main-secondary">{sales} sold</div>
-              </div>
-            )}
-            {/* Price */}
-            <ProductPrice sizes={sizes} isCard handleChange={() => {}} />
-          </Link>
+    <div className="relative">
+      {isDemoProduct && (
+        <div className="absolute top-2 left-2 z-10 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+          Demo
         </div>
-        <div className="hidden group-hover:block absolute -left-[1px] bg-white border border-t-0  w-[calc(100%+2px)] px-4 pb-4 rounded-b-3xl shadow-xl z-30 space-y-2">
-          {/* Variant switcher */}
-          <VariantSwitcher
-            images={variantImages}
-            variants={variants}
-            setVariant={setVariant}
-            selectedVariant={variant}
+      )}
+      <Link href={`/product/${product.slug}`}>
+        <div className="w-[178px] h-[178px] relative">
+          <Image
+            src={product.image || "/assets/images/placeholder.png"}
+            fill
+            alt={product.name}
+            sizes="178px"
           />
-          {/* Action buttons */}
-          <div className="flex flex-items gap-x-1">
-            <Button>
-              <Link href={`/product/${slug}/${variantSlug}`}>Add to cart</Link>
-            </Button>
-            <Button
-              variant="black"
-              size="icon"
-              onClick={() => handleaddToWishlist()}
-            >
-              <Heart className="w-5" />
-            </Button>
-          </div>
         </div>
+      </Link>
+
+      <div className="p-2">
+        <Link href={`/product/${product.slug}`}>
+          <p className="text-sm font-medium text-gray-800 h-10 overflow-hidden">
+            {product.name}
+          </p>
+        </Link>
+        <div>
+          <p className="text-lg font-bold text-gray-900">
+            ₹{product.price}
+          </p>
+        </div>
+      </div>
+
+      <div className="px-2 pb-2 flex justify-between items-center">
+        <button className="bg-blue-600 text-white text-xs font-medium py-2 px-4 rounded-full w-[70%]">
+          Add to Cart
+        </button>
+        <button className="flex justify-center items-center h-[36px] w-[36px] border rounded-full">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
       </div>
     </div>
   );

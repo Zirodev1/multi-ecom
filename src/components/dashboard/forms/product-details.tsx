@@ -170,30 +170,30 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     resolver: zodResolver(ProductFormSchema), // Resolver for form validation
     defaultValues: {
       // Setting default form values from data (if available)
-      name: data?.name,
-      description: data?.description,
-      variantName: data?.variantName,
-      variantDescription: data?.variantDescription,
+      name: data?.name || "",
+      description: data?.description || "",
+      variantName: data?.variantName || "",
+      variantDescription: data?.variantDescription || "",
       images: data?.images || [],
-      variantImage: data?.variantImage ? [{ url: data.variantImage }] : [],
-      categoryId: data?.categoryId,
-      offerTagId: data?.offerTagId,
-      subCategoryId: data?.subCategoryId,
-      brand: data?.brand,
-      sku: data?.sku,
-      colors: data?.colors,
-      sizes: data?.sizes,
-      product_specs: data?.product_specs,
-      variant_specs: data?.variant_specs,
-      keywords: data?.keywords,
-      questions: data?.questions,
+      variantImage: data?.variantImage ? [{ url: data.variantImage }] : [{ url: "" }],
+      categoryId: data?.categoryId || "",
+      offerTagId: data?.offerTagId || "none",
+      subCategoryId: data?.subCategoryId || "",
+      brand: data?.brand || "",
+      sku: data?.sku || "",
+      colors: data?.colors || [],
+      sizes: data?.sizes || [{ size: "", quantity: 1, price: 0.01, discount: 0 }],
+      product_specs: data?.product_specs || [],
+      variant_specs: data?.variant_specs || [],
+      keywords: data?.keywords || [],
+      questions: data?.questions || [],
       isSale: data?.isSale || false,
-      weight: data?.weight,
+      weight: data?.weight || 0.01,
       saleEndDate:
         data?.saleEndDate || format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
-      freeShippingForAllCountries: data?.freeShippingForAllCountries,
+      freeShippingForAllCountries: data?.freeShippingForAllCountries || false,
       freeShippingCountriesIds: data?.freeShippingCountriesIds || [],
-      shippingFeeMethod: data?.shippingFeeMethod,
+      shippingFeeMethod: data?.shippingFeeMethod || ShippingFeeMethod.ITEM,
     },
   });
 
@@ -238,6 +238,46 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
     try {
+      // Debug values with detailed information
+      console.log("Form values being submitted:", {
+        categoryId: values.categoryId,
+        subCategoryId: values.subCategoryId,
+        categoryIdType: typeof values.categoryId,
+        subCategoryIdType: typeof values.subCategoryId,
+        isNewVariantPage,
+        formStateIsDirty: form.formState.isDirty,
+        formStateErrors: form.formState.errors
+      });
+      
+      // IMPORTANT: If we still don't have category IDs, check directly from the select elements
+      if (!values.categoryId && !isNewVariantPage) {
+        // Try to get the category from the form element
+        console.log("Categories available:", categories.map(c => ({ id: c.id, name: c.name })));
+        console.log("Selected categoryId from form state:", form.getValues().categoryId);
+        
+        // If we still don't have a category, use the first one available
+        if (categories.length > 0) {
+          values.categoryId = categories[0].id; 
+          console.log("Force-setting categoryId to first available:", values.categoryId);
+        }
+      }
+      
+      // IMPORTANT: If we still don't have subcategory ID, check directly from the select elements
+      if (!values.subCategoryId && !isNewVariantPage) {
+        // Try to get the subcategory from the form element
+        console.log("Subcategories available:", subCategories.map(c => ({ id: c.id, name: c.name })));
+        console.log("Selected subCategoryId from form state:", form.getValues().subCategoryId);
+        
+        // If we still don't have a subcategory, use the first one available
+        if (subCategories.length > 0) {
+          values.subCategoryId = subCategories[0].id;
+          console.log("Force-setting subCategoryId to first available:", values.subCategoryId);
+        }
+      }
+      
+      // If it's a new variant for an existing product, ensure we use the existing product's brand
+      const brandValue = isNewVariantPage && data?.brand ? data.brand : values.brand;
+      
       // Upserting product data
       const response = await upsertProduct(
         {
@@ -251,10 +291,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
           variantImage: values.variantImage[0].url,
           categoryId: values.categoryId,
           subCategoryId: values.subCategoryId,
-          offerTagId: values.offerTagId || "",
+          offerTagId: values.offerTagId === "none" ? "" : (values.offerTagId || ""),
           isSale: values.isSale,
           saleEndDate: values.saleEndDate,
-          brand: values.brand,
+          brand: brandValue,
           sku: values.sku,
           weight: values.weight,
           colors: values.colors,
@@ -537,9 +577,15 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       name="categoryId"
                       render={({ field }) => (
                         <FormItem className="flex-1">
+                          <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
                           <Select
                             disabled={isLoading || categories.length == 0}
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => {
+                              console.log("Category selected:", value);
+                              field.onChange(value);
+                              // Force-set the value to ensure it gets captured
+                              form.setValue("categoryId", value);
+                            }}
                             value={field.value}
                             defaultValue={field.value}
                           >
@@ -572,13 +618,19 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       name="subCategoryId"
                       render={({ field }) => (
                         <FormItem className="flex-1">
+                          <FormLabel>Subcategory <span className="text-red-500">*</span></FormLabel>
                           <Select
                             disabled={
                               isLoading ||
                               categories.length == 0 ||
                               !form.getValues().categoryId
                             }
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => {
+                              console.log("Subcategory selected:", value);
+                              field.onChange(value);
+                              // Force-set the value to ensure it gets captured
+                              form.setValue("subCategoryId", value);
+                            }}
                             value={field.value}
                             defaultValue={field.value}
                           >
@@ -619,11 +671,12 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                               <SelectTrigger>
                                 <SelectValue
                                   defaultValue={field.value}
-                                  placeholder="Select an offer"
+                                  placeholder="Select an offer (Optional)"
                                 />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              <SelectItem value="none">No offer</SelectItem>
                               {offerTags &&
                                 offerTags.map((offer) => (
                                   <SelectItem key={offer.id} value={offer.id}>
@@ -641,24 +694,22 @@ const ProductDetails: FC<ProductDetailsProps> = ({
               )}
               {/* Brand, Sku, Weight */}
               <InputFieldset
-                label={isNewVariantPage ? "Sku, Weight" : "Brand, Sku, Weight"}
+                label={isNewVariantPage ? "Brand, Sku, Weight" : "Brand, Sku, Weight"}
               >
                 <div className="flex flex-col lg:flex-row gap-4">
-                  {!isNewVariantPage && (
-                    <FormField
-                      disabled={isLoading}
-                      control={form.control}
-                      name="brand"
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder="Product brand" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  <FormField
+                    disabled={isLoading}
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Product brand" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     disabled={isLoading}
                     control={form.control}
@@ -732,7 +783,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                     name="keywords"
                     render={({ field }) => (
                       <FormItem className="relative flex-1">
-                        <FormLabel>Product Keywords</FormLabel>
+                        <FormLabel>Product Keywords (Optional)</FormLabel>
                         <FormControl>
                           <ReactTags
                             handleAddition={handleAddition}
@@ -793,7 +844,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                 description={
                   isNewVariantPage
                     ? ""
-                    : "Note: The product specifications are the main specs for the product (Will display in every variant page). You can add extra specs specific to this variant using 'Variant Specifications' tab."
+                    : "Note: Product and variant specifications are optional."
                 }
               >
                 <Tabs
@@ -805,10 +856,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                   {!isNewVariantPage && (
                     <TabsList className="w-full grid grid-cols-2">
                       <TabsTrigger value="productSpecs">
-                        Product Specifications
+                        Product Specifications (Optional)
                       </TabsTrigger>
                       <TabsTrigger value="variantSpecs">
-                        Variant Specifications
+                        Variant Specifications (Optional)
                       </TabsTrigger>
                     </TabsList>
                   )}
@@ -854,7 +905,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
               </InputFieldset>
               {/* Questions*/}
               {!isNewVariantPage && (
-                <InputFieldset label="Questions & Answers">
+                <InputFieldset label="Questions & Answers (Optional)">
                   <div className="w-full flex flex-col gap-y-3">
                     <ClickToAddInputs
                       details={questions}
@@ -1099,7 +1150,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                   </div>
                 </InputFieldset>
               )}
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading || (!isNewVariantPage && (!form.getValues().categoryId || !form.getValues().subCategoryId))}
+              >
                 {isLoading
                   ? "loading..."
                   : data?.productId && data.variantId

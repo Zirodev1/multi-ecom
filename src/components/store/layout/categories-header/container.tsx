@@ -21,7 +21,7 @@ export default function CategoriesHeaderContainer({
       <CategoriesMenu categories={categories} open={open} setOpen={setOpen} />
       
       {/* Featured SubCategories */}
-      <div className="border-l border-gray-400 pl-3 ml-2">
+      <div className="border-l border-gray-400 pl-3 ml-2 hidden md:block">
         <FeaturedSubCategories subCategories={featuredSubCategories} open={open} />
       </div>
       

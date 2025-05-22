@@ -14,8 +14,8 @@ export default async function SellerStoreSettingsPage({
 }: {
   params: PageParams;
 }) {
-  // Get the storeUrl from params
-  const storeUrl = params?.storeUrl;
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
   
   // Check if this is demo mode
   const cookieStore = await cookies();

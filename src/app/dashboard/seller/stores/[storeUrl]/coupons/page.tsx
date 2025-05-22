@@ -8,11 +8,13 @@ import CouponsTable from "./components/coupons-table";
 export default async function SellerCouponsPage({
   params,
 }: {
-  params: { storeUrl: string };
+  params: PageParams;
 }) {
-  // Get the storeUrl from params - ensure it's a string
-  const { storeUrl = '' } = await params;
-  const storeUrlStr = String(storeUrl);
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
+  
+  // Get the storeUrl from params directly (without using await)
+  const storeUrlStr = storeUrl;
   
   // Check if this is demo mode
   const cookieStore = await cookies();
@@ -81,6 +83,25 @@ export default async function SellerCouponsPage({
         </div>
         
         <CouponsTable data={demoCoupons} storeUrl={storeUrlStr} />
+      </div>
+    );
+  }
+  
+  // Special case for "new" store URL - show empty coupons
+  if (storeUrlStr === "new") {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Coupons Management</h1>
+        </div>
+        
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
+          <p className="text-blue-700">
+            You need to create a store first to manage coupons.
+          </p>
+        </div>
+        
+        <CouponsTable data={[]} storeUrl={storeUrlStr} />
       </div>
     );
   }

@@ -422,12 +422,21 @@ export type ProductWithVariants = {
 };
 
 export type SimpleProduct = {
+  id?: string;
   name: string;
   slug: string;
-  variantName: string;
-  variantSlug: string;
+  variantName?: string;
+  variantSlug?: string;
   price: number;
+  discountedPrice?: number;
   image: string;
+  category?: string;
+  brand?: string;
+  store?: {
+    name: string;
+    url: string;
+  };
+  availableQuantity?: number;
 };
 
 export type FeaturedCategoryType = Prisma.PromiseReturnType<

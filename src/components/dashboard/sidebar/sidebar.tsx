@@ -23,15 +23,28 @@ import {
 import { Store } from "@prisma/client";
 import StoreSwitcher from "./store-switcher";
 
+// Define a simplified store type
+type SimplifiedStore = {
+  id: string;
+  name: string;
+  url: string;
+  logo: string;
+  status: "PENDING" | "ACTIVE" | "BANNED" | "DISABLED";
+};
+
 interface SidebarProps {
   isAdmin?: boolean;
   isDemo?: boolean;
   demoRole?: "ADMIN" | "SELLER";
-  stores?: Store[];
+  stores?: SimplifiedStore[] | Store[];
 }
 
 const Sidebar: FC<SidebarProps> = async ({ isAdmin, isDemo, demoRole, stores }) => {
   const user = await currentUser();
+  
+  // Debug: Log received stores
+  console.log("Sidebar received stores:", stores ? JSON.stringify(stores) : "No stores");
+  
   return (
     <div className="w-[300px] border-r h-screen fixed top-0 left-0 z-20 bg-background flex flex-col">
       <div className="flex-none mx-auto p-2">
@@ -53,7 +66,16 @@ const Sidebar: FC<SidebarProps> = async ({ isAdmin, isDemo, demoRole, stores }) 
           user && <UserInfo user={user} />
         )}
         
-        {!isAdmin && stores && <StoreSwitcher stores={stores} />}
+        {!isAdmin && stores && stores.length > 0 ? (
+          <>
+            <div className="my-2 text-sm text-gray-500">Stores ({stores.length})</div>
+            <StoreSwitcher stores={stores} />
+          </>
+        ) : !isAdmin ? (
+          <div className="my-2 p-3 bg-gray-100 rounded-md text-sm">
+            No stores found. Create one to get started.
+          </div>
+        ) : null}
         
         {isAdmin ? (
           <SidebarNavAdmin menuLinks={adminDashboardSidebarOptions} />

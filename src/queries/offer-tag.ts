@@ -15,6 +15,7 @@ export const getAllOfferTags = async (storeUrl?: string) => {
     // Retrieve the storeId based on the storeUrl
     const store = await db.store.findUnique({
       where: { url: storeUrl },
+      select: { id: true }
     });
 
     // If no store is found, return an empty array or handle as needed
@@ -36,7 +37,12 @@ export const getAllOfferTags = async (storeUrl?: string) => {
           },
         }
       : {},
-    include: {
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      createdAt: true,
+      updatedAt: true,
       products: {
         select: {
           id: true,

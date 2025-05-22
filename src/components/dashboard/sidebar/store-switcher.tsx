@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, PlusCircle, StoreIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -32,22 +32,46 @@ const StoreSwitcher: FC<StoreSwitcherProps> = ({ stores, className }) => {
   const params = useParams();
   const router = useRouter();
 
-  // Format stores data
+  // Debug: Log the received stores
+  useEffect(() => {
+    console.log('StoreSwitcher received stores:', stores);
+    console.log('Params:', params);
+  }, [stores, params]);
+
+  // Format stores data and ensure URL values are not empty
   const formattedItems = stores.map((store) => ({
-    label: store.name,
-    value: store.url,
+    label: store.name || `Store ${store.id.substring(0, 6)}`,
+    value: store.url || store.id, // Use ID as fallback if URL is empty
+    id: store.id,
+    isEmptyUrl: !store.url
   }));
+
   const [open, setOpen] = useState(false);
 
-  // Get the active store
+  // Get the active store by matching either URL or ID
   const activeStore = formattedItems.find(
-    (store) => store.value === params.storeUrl
+    (store) => 
+      store.value === params.storeUrl || 
+      (store.isEmptyUrl && params.storeUrl === store.id)
   );
 
-  const onStoreSelect = (store: { label: string; value: string }) => {
+  // Debug: Log formatted items and active store
+  useEffect(() => {
+    console.log('Formatted items:', formattedItems);
+    console.log('Active store:', activeStore);
+    console.log('Current storeUrl param:', params.storeUrl);
+  }, [formattedItems, activeStore, params.storeUrl]);
+
+  const onStoreSelect = (store: { label: string; value: string; id: string; isEmptyUrl: boolean }) => {
     setOpen(false);
-    router.push(`/dashboard/seller/stores/${store.value}`);
+    
+    // If the store URL is empty, use the ID as the URL parameter
+    const urlParam = store.isEmptyUrl ? store.id : store.value;
+    
+    console.log(`Navigating to store: ${store.label} with URL param: ${urlParam}`);
+    router.push(`/dashboard/seller/stores/${urlParam}`);
   };
+  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -60,7 +84,7 @@ const StoreSwitcher: FC<StoreSwitcherProps> = ({ stores, className }) => {
           className={cn("w-[250px] justify-between", className)}
         >
           <StoreIcon className="mr-2 w-4 h-4" />
-          {activeStore?.label}
+          {activeStore?.label || "Select a store"}
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -68,23 +92,28 @@ const StoreSwitcher: FC<StoreSwitcherProps> = ({ stores, className }) => {
         <Command>
           <CommandList>
             <CommandInput placeholder="Search stores..." />
-            <CommandEmpty>No Store Selected.</CommandEmpty>
+            <CommandEmpty>No stores found.</CommandEmpty>
             <CommandGroup heading="Stores">
-              {formattedItems.map((store) => (
-                <CommandItem
-                  key={store.value}
-                  onSelect={() => onStoreSelect(store)}
-                  className="text-sm cursor-pointer"
-                >
-                  <StoreIcon className="mr-2 w-4 h-4" />
-                  {store.label}
-                  <Check
-                    className={cn("ml-auto h-4 w-4 opacity-0", {
-                      "opacity-100": activeStore?.value === store.value,
-                    })}
-                  />
-                </CommandItem>
-              ))}
+              {formattedItems.length > 0 ? (
+                formattedItems.map((store) => (
+                  <CommandItem
+                    key={store.id}
+                    onSelect={() => onStoreSelect(store)}
+                    className="text-sm cursor-pointer"
+                  >
+                    <StoreIcon className="mr-2 w-4 h-4" />
+                    {store.label}
+                    {store.isEmptyUrl && <span className="ml-2 text-xs text-amber-500">(No URL)</span>}
+                    <Check
+                      className={cn("ml-auto h-4 w-4 opacity-0", {
+                        "opacity-100": activeStore?.id === store.id,
+                      })}
+                    />
+                  </CommandItem>
+                ))
+              ) : (
+                <CommandItem disabled>No stores available</CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
           <CommandSeparator />

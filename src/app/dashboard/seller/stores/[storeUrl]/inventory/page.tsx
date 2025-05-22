@@ -14,9 +14,11 @@ export default async function InventoryPage({
 }: {
   params: PageParams;
 }) {
-  // Get the storeUrl from params - ensure it's a string
-  const { storeUrl = '' } = await params;
-  const storeUrlStr = String(storeUrl);
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
+  
+  // Get the storeUrl from params directly (without using await)
+  const storeUrlStr = storeUrl;
   
   // Check if this is demo mode
   const cookieStore = await cookies();
@@ -105,14 +107,45 @@ export default async function InventoryPage({
     );
   }
   
+  // Special case for "new" store URL - show empty inventory
+  if (storeUrlStr === "new") {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Inventory Management</h1>
+        </div>
+        
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
+          <p className="text-blue-700">
+            You need to create a store first to manage inventory.
+          </p>
+        </div>
+        
+        <InventoryTable data={[]} />
+      </div>
+    );
+  }
+  
   // For real users, we would get actual inventory data
   // This would need to be implemented based on your real data structure
-  // For now, returning a placeholder
   const products = await getAllStoreProducts(storeUrlStr);
   
   // Convert products to inventory format
   // This transformation will need to be adjusted based on your actual data structure
-  const inventory = [];
+  type InventoryItem = {
+    id: string;
+    productName: string;
+    variant: string;
+    size: string;
+    inStock: number;
+    lowStock: boolean;
+    productId: string;
+    variantId: string;
+    sizeId: string;
+    isDemo: boolean;
+  };
+  
+  const inventory: InventoryItem[] = [];
   
   products.forEach(product => {
     product.variants.forEach(variant => {
@@ -139,18 +172,7 @@ export default async function InventoryPage({
         <h1 className="text-2xl font-bold">Inventory Management</h1>
       </div>
       
-      <DataTable
-        actionButtonText={
-          <>
-            <Plus size={15} />
-            Bulk Update
-          </>
-        }
-        filterValue="productName"
-        data={inventory}
-        columns={columns}
-        searchPlaceholder="Search products..."
-      />
+      <InventoryTable data={inventory} />
     </div>
   );
 } 

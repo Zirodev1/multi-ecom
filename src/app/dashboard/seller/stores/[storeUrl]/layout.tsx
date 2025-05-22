@@ -16,6 +16,15 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { DEMO_MODE_COOKIE, DEMO_ROLE_COOKIE } from "@/lib/demo-mode";
 
+// Define a type for the simplified store objects
+type SimplifiedStore = {
+  id: string;
+  name: string;
+  url: string;
+  logo: string;
+  status: "PENDING" | "ACTIVE" | "BANNED" | "DISABLED";
+};
+
 export default async function SellerStoreDashboardLayout({
   children,
 }: {
@@ -31,9 +40,9 @@ export default async function SellerStoreDashboardLayout({
     return (
       <div className="h-full w-full flex">
         <Sidebar isDemo demoRole="SELLER" />
-        <div className="w-full pr-4 md:pr-6 lg:pr-8">
+        <div className="w-full pl-[280px] pr-4 md:pr-6 lg:pr-8">
           <Header isDemo />
-          <div className="w-full  mx-auto mt-[75px] sm:px-4 md:px-6 py-4">
+          <div className="w-full mx-auto mt-[75px] sm:px-4 md:px-6 py-4">
             {children}
           </div>
         </div>
@@ -49,22 +58,56 @@ export default async function SellerStoreDashboardLayout({
     return; // Ensure no further code is executed after redirect
   }
 
-  // Retrieve the list of stores associated with the authenticated user.
-  const stores = await db.store.findMany({
-    where: {
-      userId: user.id,
-    },
-  });
+  try {
+    // Retrieve the list of stores associated with the authenticated user.
+    // Only select fields that are needed and definitely exist in the database
+    const stores = await db.store.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        logo: true,
+        status: true
+      }
+    });
 
-  return (
-    <div className="h-full w-full flex">
-      <Sidebar stores={stores} />
-      <div className="w-full pl-[280px] pr-4 md:pr-6 lg:pr-8">
-        <Header />
-        <div className="w-full max-w-5xl mx-auto mt-[75px] px-2 sm:px-4 md:px-6 py-4">
-          {children}
+    // Create simplified store objects with only the necessary properties
+    const simplifiedStores: SimplifiedStore[] = stores.map(store => ({
+      id: store.id,
+      name: store.name,
+      url: store.url,
+      logo: store.logo,
+      status: store.status
+    }));
+
+    return (
+      <div className="h-full w-full flex">
+        <Sidebar stores={simplifiedStores} />
+        <div className="w-full pl-[280px] pr-4 md:pr-6 lg:pr-8">
+          <Header />
+          <div className="w-full max-w-5xl mx-auto mt-[75px] px-2 sm:px-4 md:px-6 py-4">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error("Error fetching stores:", error);
+    
+    // Return a basic layout without stores if there's an error
+    return (
+      <div className="h-full w-full flex">
+        <Sidebar />
+        <div className="w-full pl-[280px] pr-4 md:pr-6 lg:pr-8">
+          <Header />
+          <div className="w-full max-w-5xl mx-auto mt-[75px] px-2 sm:px-4 md:px-6 py-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
 }

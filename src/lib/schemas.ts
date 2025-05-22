@@ -188,11 +188,12 @@ export const ProductFormSchema = z.object({
     .uuid(),
   offerTagId: z
     .string({
-      required_error: "Product offer tag ID is mandatory.",
       invalid_type_error: "Product offer tag ID must be a valid UUID.",
     })
     .uuid()
-    .optional(),
+    .optional()
+    .or(z.literal("none"))
+    .or(z.literal("")),
   brand: z
     .string({
       required_error: "Product brand is mandatory.",
@@ -220,16 +221,11 @@ export const ProductFormSchema = z.object({
   }),
   keywords: z
     .string({
-      required_error: "Product keywords are mandatory.",
       invalid_type_error: "Keywords must be valid strings.",
     })
     .array()
-    .min(5, {
-      message: "Please provide at least 5 keywords.",
-    })
-    .max(10, {
-      message: "You can provide up to 10 keywords.",
-    }),
+    .optional()
+    .default([]),
   colors: z
     .object({ color: z.string() })
     .array()
@@ -261,42 +257,24 @@ export const ProductFormSchema = z.object({
       value: z.string(),
     })
     .array()
-    .min(1, "Please provide at least one product spec.")
-    .refine(
-      (product_specs) =>
-        product_specs.every((s) => s.name.length > 0 && s.value.length > 0),
-      {
-        message: "All product specs inputs must be filled correctly.",
-      }
-    ),
+    .optional()
+    .default([]),
   variant_specs: z
     .object({
       name: z.string(),
       value: z.string(),
     })
     .array()
-    .min(1, "Please provide at least one product variant spec.")
-    .refine(
-      (product_specs) =>
-        product_specs.every((s) => s.name.length > 0 && s.value.length > 0),
-      {
-        message: "All product variant specs inputs must be filled correctly.",
-      }
-    ),
+    .optional()
+    .default([]),
   questions: z
     .object({
       question: z.string(),
       answer: z.string(),
     })
     .array()
-    .min(1, "Please provide at least one product question.")
-    .refine(
-      (questions) =>
-        questions.every((q) => q.question.length > 0 && q.answer.length > 0),
-      {
-        message: "All product question inputs must be filled correctly.",
-      }
-    ),
+    .optional()
+    .default([]),
   isSale: z.boolean().default(false),
   saleEndDate: z.string().optional(),
   freeShippingForAllCountries: z.boolean().default(false),

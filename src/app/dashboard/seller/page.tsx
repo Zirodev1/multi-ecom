@@ -38,6 +38,13 @@ export default async function SellerDashboardPage() {
     where: {
       userId: user.id,
     },
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      logo: true,
+      status: true
+    }
   });
 
   // If the user has no stores, redirect them to the page for creating a new store.

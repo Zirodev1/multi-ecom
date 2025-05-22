@@ -10,18 +10,13 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { DEMO_MODE_COOKIE, DEMO_STORE_URL } from "@/lib/demo-mode";
 
-type PageParams = {
+interface ParamsType {
   storeUrl: string;
-};
+}
 
-export default async function SellerProductsPage({
-  params,
-}: {
-  params: PageParams;
-}) {
-  // Get the storeUrl from params
-  const { storeUrl = '' } = await params;
-  const storeUrlStr = String(storeUrl);
+export default async function SellerProductsPage({ params }: { params: ParamsType }) {
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
   
   // Check if this is demo mode
   const cookieStore = await cookies();
@@ -37,7 +32,7 @@ export default async function SellerProductsPage({
   });
   
   // For demo mode, return mock product data
-  if (isDemoMode && storeUrlStr === DEMO_STORE_URL) {
+  if (isDemoMode && storeUrl === DEMO_STORE_URL) {
     // Create demo products that match the StoreProductType structure
     const demoProducts = [
       {
@@ -172,11 +167,11 @@ export default async function SellerProductsPage({
             <ProductDetails
               categories={categories}
               offerTags={offerTags}
-              storeUrl={storeUrlStr}
+              storeUrl={storeUrl}
               countries={countries}
             />
           }
-          newTabLink={`/dashboard/seller/stores/${storeUrlStr}/products/new`}
+          newTabLink={`/dashboard/seller/stores/${storeUrl}/products/new`}
           filterValue="name"
           data={demoProducts}
           columns={columns}
@@ -186,30 +181,100 @@ export default async function SellerProductsPage({
     );
   }
   
-  // Fetching products data from the database for real stores
-  const products = await getAllStoreProducts(storeUrlStr);
-  
-  return (
-    <DataTable
-      actionButtonText={
-        <>
-          <Plus size={15} />
-          Create product
-        </>
-      }
-      modalChildren={
-        <ProductDetails
-          categories={categories}
-          offerTags={offerTags}
-          storeUrl={storeUrlStr}
-          countries={countries}
+  // Special case for "new" store URL - show empty product list
+  if (storeUrl === "new") {
+    return (
+      <div>
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
+          <p className="text-blue-700">
+            You need to create a store before adding products.
+          </p>
+        </div>
+        
+        <DataTable
+          actionButtonText={
+            <>
+              <Plus size={15} />
+              Create product
+            </>
+          }
+          modalChildren={
+            <ProductDetails
+              categories={categories}
+              offerTags={offerTags}
+              storeUrl={storeUrl}
+              countries={countries}
+            />
+          }
+          newTabLink={`/dashboard/seller/stores/${storeUrl}/products/new`}
+          filterValue="name"
+          data={[]}
+          columns={columns}
+          searchPlaceholder="Search product name..."
         />
-      }
-      newTabLink={`/dashboard/seller/stores/${storeUrlStr}/products/new`}
-      filterValue="name"
-      data={products}
-      columns={columns}
-      searchPlaceholder="Search product name..."
-    />
-  );
+      </div>
+    );
+  }
+  
+  try {
+    // Fetching products data from the database for real stores
+    const products = await getAllStoreProducts(storeUrl);
+    
+    return (
+      <DataTable
+        actionButtonText={
+          <>
+            <Plus size={15} />
+            Create product
+          </>
+        }
+        modalChildren={
+          <ProductDetails
+            categories={categories}
+            offerTags={offerTags}
+            storeUrl={storeUrl}
+            countries={countries}
+          />
+        }
+        newTabLink={`/dashboard/seller/stores/${storeUrl}/products/new`}
+        filterValue="name"
+        data={products}
+        columns={columns}
+        searchPlaceholder="Search product name..."
+      />
+    );
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return (
+      <div>
+        <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+          <p className="text-red-700">
+            {error instanceof Error ? error.message : "Error loading products. Please try again later."}
+          </p>
+        </div>
+        
+        <DataTable
+          actionButtonText={
+            <>
+              <Plus size={15} />
+              Create product
+            </>
+          }
+          modalChildren={
+            <ProductDetails
+              categories={categories}
+              offerTags={offerTags}
+              storeUrl={storeUrl}
+              countries={countries}
+            />
+          }
+          newTabLink={`/dashboard/seller/stores/${storeUrl}/products/new`}
+          filterValue="name"
+          data={[]}
+          columns={columns}
+          searchPlaceholder="Search product name..."
+        />
+      </div>
+    );
+  }
 }

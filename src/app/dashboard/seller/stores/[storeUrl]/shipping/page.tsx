@@ -8,11 +8,13 @@ import { DEMO_MODE_COOKIE, DEMO_STORE_URL } from "@/lib/demo-mode";
 export default async function SellerStoreShippingPage({
   params,
 }: {
-  params: { storeUrl: string };
+  params: PageParams;
 }) {
-  // Get the storeUrl from params - ensure it's a string
-  const { storeUrl = '' } = await params;
-  const storeUrlStr = String(storeUrl);
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
+  
+  // Get the storeUrl from params directly (without using await)
+  const storeUrlStr = storeUrl;
   
   // Check if this is demo mode
   const cookieStore = await cookies();
@@ -113,6 +115,40 @@ export default async function SellerStoreShippingPage({
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Country-Specific Shipping Rates</h2>
           <ShippingTable data={demoShippingRates} />
+        </div>
+      </div>
+    );
+  }
+  
+  // Special case for "new" store URL - show empty shipping settings
+  if (storeUrlStr === "new") {
+    const emptyShippingDetails = {
+      defaultShippingService: "",
+      defaultShippingFeePerItem: 0,
+      defaultShippingFeeForAdditionalItem: 0,
+      defaultShippingFeePerKg: 0,
+      defaultShippingFeeFixed: 0,
+      defaultDeliveryTimeMin: 0,
+      defaultDeliveryTimeMax: 0,
+      returnPolicy: "",
+    };
+    
+    return (
+      <div>
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
+          <p className="text-blue-700">
+            You need to create a store first to manage shipping settings.
+          </p>
+        </div>
+        
+        <StoreDefaultShippingDetails
+          data={emptyShippingDetails}
+          storeUrl={storeUrlStr}
+        />
+        
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Country-Specific Shipping Rates</h2>
+          <ShippingTable data={[]} />
         </div>
       </div>
     );

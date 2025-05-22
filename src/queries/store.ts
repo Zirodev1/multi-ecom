@@ -39,6 +39,39 @@ export const upsertStore = async (store: Partial<Store>) => {
 
     // Ensure store data is provided
     if (!store) throw new Error("Please provide store data.");
+    
+    // Additional validation
+    if (!store.name || store.name.trim() === "") {
+      throw new Error("Store name is required.");
+    }
+    
+    if (!store.url || store.url.trim() === "") {
+      throw new Error("Store URL is required.");
+    }
+    
+    if (!store.email || store.email.trim() === "") {
+      throw new Error("Store email is required.");
+    }
+    
+    if (!store.phone || store.phone.trim() === "") {
+      throw new Error("Store phone is required.");
+    }
+    
+    if (!store.description || store.description.trim() === "") {
+      throw new Error("Store description is required.");
+    }
+    
+    // Sanitize inputs to prevent empty strings
+    const sanitizedStore = {
+      ...store,
+      name: store.name.trim(),
+      url: store.url.trim(),
+      email: store.email.trim(),
+      phone: store.phone.trim(),
+      description: store.description.trim()
+    };
+    
+    console.log("Server-side store upsert data:", sanitizedStore);
 
     // Check if store with same name, email,url, or phone number already exists
     const existingStore = await db.store.findFirst({
@@ -46,15 +79,15 @@ export const upsertStore = async (store: Partial<Store>) => {
         AND: [
           {
             OR: [
-              { name: store.name },
-              { email: store.email },
-              { phone: store.phone },
-              { url: store.url },
+              { name: sanitizedStore.name },
+              { email: sanitizedStore.email },
+              { phone: sanitizedStore.phone },
+              { url: sanitizedStore.url },
             ],
           },
           {
             NOT: {
-              id: store.id,
+              id: sanitizedStore.id,
             },
           },
         ],
@@ -64,36 +97,56 @@ export const upsertStore = async (store: Partial<Store>) => {
     // If a store with same name, email, or phone number already exists, throw an error
     if (existingStore) {
       let errorMessage = "";
-      if (existingStore.name === store.name) {
+      if (existingStore.name === sanitizedStore.name) {
         errorMessage = "A store with the same name already exists";
-      } else if (existingStore.email === store.email) {
+      } else if (existingStore.email === sanitizedStore.email) {
         errorMessage = "A store with the same email already exists";
-      } else if (existingStore.phone === store.phone) {
+      } else if (existingStore.phone === sanitizedStore.phone) {
         errorMessage = "A store with the same phone number already exists";
-      } else if (existingStore.url === store.url) {
+      } else if (existingStore.url === sanitizedStore.url) {
         errorMessage = "A store with the same URL already exists";
       }
       throw new Error(errorMessage);
     }
 
     // Upsert store details into the database
-    /*
     const storeDetails = await db.store.upsert({
       where: {
-        id: store.id,
+        id: sanitizedStore.id || "",
       },
-      update: store,
+      update: {
+        name: sanitizedStore.name,
+        description: sanitizedStore.description,
+        email: sanitizedStore.email,
+        phone: sanitizedStore.phone,
+        url: sanitizedStore.url,
+        logo: sanitizedStore.logo,
+        cover: sanitizedStore.cover,
+        featured: sanitizedStore.featured,
+        updatedAt: new Date()
+      },
       create: {
-        ...store,
-        user: {
-          connect: { id: user.id },
-        },
+        id: sanitizedStore.id || "",
+        name: sanitizedStore.name,
+        description: sanitizedStore.description,
+        email: sanitizedStore.email,
+        phone: sanitizedStore.phone,
+        url: sanitizedStore.url,
+        logo: sanitizedStore.logo || "",
+        cover: sanitizedStore.cover || "",
+        featured: sanitizedStore.featured || false,
+        userId: user.id,
+        createdAt: sanitizedStore.createdAt || new Date(),
+        updatedAt: sanitizedStore.updatedAt || new Date(),
+        defaultShippingService: "International Delivery",
+        returnPolicy: "Return in 30 days."
       },
     });
-
+    
+    console.log("Store upsert result:", storeDetails);
     return storeDetails;
-  */
   } catch (error) {
+    console.error("Store upsert error:", error);
     throw error;
   }
 };
@@ -171,6 +224,9 @@ export const updateStoreDefaultShippingDetails = async (
         url: storeUrl,
         userId: user.id,
       },
+      select: {
+        id: true
+      }
     });
 
     if (!check_ownership)
@@ -224,6 +280,9 @@ export const getStoreShippingRates = async (storeUrl: string) => {
         url: storeUrl,
         userId: user.id,
       },
+      select: {
+        id: true
+      }
     });
 
     if (!check_ownership)
@@ -234,6 +293,9 @@ export const getStoreShippingRates = async (storeUrl: string) => {
     // Get store details
     const store = await db.store.findUnique({
       where: { url: storeUrl, userId: user.id },
+      select: {
+        id: true
+      }
     });
 
     if (!store) throw new Error("Store could not be found.");
@@ -301,6 +363,9 @@ export const upsertShippingRate = async (
         url: storeUrl,
         userId: user.id,
       },
+      select: {
+        id: true
+      }
     });
 
     if (!check_ownership)
@@ -321,6 +386,9 @@ export const upsertShippingRate = async (
         url: storeUrl,
         userId: user.id,
       },
+      select: {
+        id: true
+      }
     });
     if (!store) throw new Error("Please provide a valid store URL.");
 
@@ -367,6 +435,10 @@ export const getStoreOrders = async (storeUrl: string) => {
       where: {
         url: storeUrl,
       },
+      select: {
+        id: true,
+        userId: true
+      }
     });
 
     // Ensure store existence
@@ -439,6 +511,13 @@ export const applySeller = async (store: StoreType) => {
           },
         ],
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        url: true
+      }
     });
 
     // If a store with same name, email, or phone number already exists, throw an error
@@ -486,6 +565,12 @@ export const getAllStores = async () => {
     // Ensure user is authenticated
     if (!user) throw new Error("Unauthenticated.");
 
+    // Debug user role
+    console.log("User ID:", user.id);
+    console.log("User Email:", user.emailAddresses[0]?.emailAddress);
+    console.log("User Metadata:", user.privateMetadata);
+    console.log("User Role:", user.privateMetadata.role);
+
     // Verify admin permission
     if (user.privateMetadata.role !== "ADMIN") {
       throw new Error(
@@ -496,15 +581,24 @@ export const getAllStores = async () => {
     // Fetch all stores from the database
     const stores = await db.store.findMany({
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            picture: true
+          }
+        }
       },
       orderBy: {
         createdAt: "desc",
       },
     });
+    
     return stores;
   } catch (error) {
     // Log and re-throw any errors
+    console.error("Error in getAllStores:", error);
     throw error;
   }
 };
@@ -529,6 +623,11 @@ export const updateStoreStatus = async (
     where: {
       id: storeId,
     },
+    select: {
+      id: true,
+      status: true,
+      userId: true
+    }
   });
 
   // Verify seller ownership
@@ -544,18 +643,38 @@ export const updateStoreStatus = async (
     data: {
       status,
     },
+    select: {
+      id: true,
+      status: true,
+      userId: true
+    }
   });
 
   // Update the user role
-  if (store.status === "PENDING" && updatedStore.status === "ACTIVE") {
-    await db.user.update({
-      where: {
-        id: updatedStore.userId,
-      },
-      data: {
-        role: "SELLER",
-      },
-    });
+  if (store.status === "PENDING" && updatedStore.status === "ACTIVE" && updatedStore.userId) {
+    try {
+      // Check if the user exists before updating
+      const userExists = await db.user.findUnique({
+        where: { id: updatedStore.userId },
+        select: { id: true }
+      });
+      
+      if (userExists) {
+        await db.user.update({
+          where: {
+            id: updatedStore.userId,
+          },
+          data: {
+            role: "SELLER",
+          },
+        });
+      } else {
+        console.log(`User with ID ${updatedStore.userId} not found, skipping role update`);
+      }
+    } catch (error) {
+      // Log the error but don't fail the store status update
+      console.error("Error updating user role:", error);
+    }
   }
 
   return updatedStore.status;

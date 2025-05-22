@@ -14,9 +14,11 @@ export default async function SellerOrdersPage({
 }: {
   params: PageParams;
 }) {
-  // Get the storeUrl from params - ensure it's a string
-  const { storeUrl = '' } = await params;
-  const storeUrlStr = String(storeUrl);
+  // We need to await the params object to avoid the Next.js error
+  const { storeUrl } = await Promise.resolve(params);
+  
+  // Get the storeUrl from params directly (without using await)
+  const storeUrlStr = storeUrl;
   
   // Check if this is demo mode
   const cookieStore = await cookies();
@@ -81,6 +83,26 @@ export default async function SellerOrdersPage({
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+  
+  // Special case for "new" store URL - show empty orders
+  if (storeUrlStr === "new") {
+    return (
+      <div>
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
+          <p className="text-blue-700">
+            You need to create a store first to manage orders.
+          </p>
+        </div>
+        
+        <DataTable
+          filterValue="id"
+          data={[]}
+          columns={columns}
+          searchPlaceholder="Search order by id..."
+        />
       </div>
     );
   }

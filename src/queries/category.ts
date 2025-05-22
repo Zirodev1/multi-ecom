@@ -127,6 +127,9 @@ export const getAllCategories = async (storeUrl?: string) => {
     // Retrieve the storeId based on the storeUrl
     const store = await db.store.findUnique({
       where: { url: storeUrl },
+      select: {
+        id: true
+      }
     });
 
     // If no store is found, return an empty array or handle as needed
@@ -143,13 +146,31 @@ export const getAllCategories = async (storeUrl?: string) => {
       ? {
           products: {
             some: {
-              storeId: storeId,
+              storeId,
             },
           },
         }
       : {},
-    include: {
-      subCategories: true,
+    select: {
+      id: true,
+      name: true,
+      image: true,
+      url: true,
+      featured: true,
+      createdAt: true,
+      updatedAt: true,
+      subCategories: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          url: true,
+          featured: true,
+          categoryId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
     orderBy: {
       updatedAt: "desc",
@@ -167,6 +188,16 @@ export const getAllCategoriesForCategory = async (categoryId: string) => {
   const subCategories = await db.subCategory.findMany({
     where: {
       categoryId,
+    },
+    select: {
+      id: true,
+      name: true,
+      image: true,
+      url: true,
+      featured: true,
+      categoryId: true,
+      createdAt: true,
+      updatedAt: true
     },
     orderBy: {
       updatedAt: "desc",
