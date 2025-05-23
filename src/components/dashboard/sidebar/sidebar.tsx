@@ -84,14 +84,14 @@ const Sidebar: FC<SidebarProps> = async ({ isAdmin, isDemo, demoRole, stores }) 
       </div>
       
       {/* Back to Home button - always visible */}
-      <div className="flex-none px-4 pb-3">
+      {!isDemo && (<div className="flex-none px-4 pb-3">
         <Link href="/" className="w-full block">
           <Button variant="destructive" className="w-full">
             <Home className="mr-2 h-4 w-4" />
             Exit Dashboard
           </Button>
         </Link>
-      </div>
+      </div>)}
       
       {isDemo && (
         <div className="flex-none px-4 pb-4">
