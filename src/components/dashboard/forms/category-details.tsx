@@ -73,7 +73,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
   // Output form values for debugging
   useEffect(() => {
     const subscription = form.watch((value) => {
-      console.log("Form values updated:", value);
       setDebugValues(value);
       
       // Keep local state in sync
@@ -104,22 +103,11 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
     try {
-      // Debug form state
-      console.log("Form state:", form.getValues());
-      console.log("Form errors:", form.formState.errors);
-      console.log("Form values received in handleSubmit:", values);
-      
-      // Debug object structure
-      console.log("Name field:", values.name);
-      console.log("Type of name:", typeof values.name);
-      console.log("Name length:", values.name?.length);
       
       // Get values from local state as fallback
       const name = values.name || formName;
       const url = values.url || formUrl;
-      
-      console.log("Using name:", name);
-      console.log("Using url:", url);
+
       
       if (!values.image || values.image.length === 0) {
         toast({
@@ -148,7 +136,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
         return;
       }
       
-      console.log("Form values before submission:", values);
       
       // Create category object with explicit name field
       const categoryData = {
@@ -161,7 +148,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
         updatedAt: new Date(),
       };
       
-      console.log("Category data being submitted:", categoryData);
       
       // Upserting category data
       const response = await upsertCategory(categoryData);
@@ -256,7 +242,6 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data }) => {
                         {...field} 
                         value={field.value || formName}
                         onChange={(e) => {
-                          console.log("Name field changed:", e.target.value);
                           setFormName(e.target.value);
                           field.onChange(e);
                         }}

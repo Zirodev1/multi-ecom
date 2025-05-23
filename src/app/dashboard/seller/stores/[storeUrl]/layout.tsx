@@ -35,7 +35,6 @@ export default async function SellerStoreDashboardLayout({
   
   // If we have a real authenticated user, proceed with normal flow
   if (user) {
-    console.log("Real user authenticated:", user.id);
     
     try {
       // Retrieve the list of stores associated with the authenticated user.
@@ -97,7 +96,6 @@ export default async function SellerStoreDashboardLayout({
   
   // If demo user with seller role, allow access without real authentication
   if (isDemoMode && demoRole === "SELLER") {
-    console.log("Using demo mode for seller dashboard - no real user authenticated");
     
     // Create a simplified store object for the sidebar
     const demoStores: SimplifiedStore[] = [{

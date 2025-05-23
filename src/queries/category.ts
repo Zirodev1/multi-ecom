@@ -49,15 +49,6 @@ export const upsertCategory = async (category: Category) => {
     // Ensure image is provided
     if (!category.image) throw new Error("Category image is required");
 
-    // Log the category data being received
-    console.log("Category data received:", {
-      id: category.id,
-      name: category.name,
-      url: category.url,
-      image: category.image,
-      featured: category.featured,
-    });
-
     // Throw error if category with same name or URL already exists
     const existingCategory = await db.category.findFirst({
       where: {

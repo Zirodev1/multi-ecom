@@ -9,14 +9,15 @@ import Header from "@/components/store/layout/header/header";
 import SuperDealsImg from "@/public/assets/images/ads/super-deals.avif";
 import MainSwiper from "@/components/store/shared/swiper";
 import { SimpleProduct } from "@/lib/types";
-import { getHomeDataDynamic, getHomeFeaturedCategories } from "@/queries/home";
+import { getHomeDataDynamic } from "@/queries/home";
 import { getProducts } from "@/queries/product";
 import Image from "next/image";
 import FeaturedCategories from "@/components/store/home/featured-categories";
 import ProductCard from "@/components/store/cards/product/product-card";
 
 export default async function HomePage() {
-  const productsData = await getProducts({}, "", 1, 100);
+  // Only fetch 7 products for the "More to love" section (one row)
+  const productsData = await getProducts({}, "", 1, 7);
   const { products } = productsData;
 
   const {
@@ -103,10 +104,13 @@ export default async function HomePage() {
                   <span>More to love</span>
                   <div className="h-[1px] flex-1 border-t-[2px] border-t-[hsla(0,0%,59.2%,.3)] my-4 mx-[14px]" />
                 </div>
-                <div className="mt-7 bg-white justify-center flex flex-wrap min-[1530px]:grid min-[1530px]:grid-cols-7 p-4 pb-16 rounded-md">
-                  {products.map((product, i) => (
-                    <ProductCard key={i} product={product} />
-                  ))}
+                {/* Single row of products */}
+                <div className="mt-7 bg-white p-4 pb-16 rounded-md">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 min-[1530px]:grid-cols-7 gap-4 justify-items-center">
+                    {products.map((product, i) => (
+                      <ProductCard key={i} product={product} />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

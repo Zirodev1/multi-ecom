@@ -149,10 +149,8 @@ export default async function AdminStoresPage() {
   
   // For real admin, get the actual stores data
   try {
-    console.log("Attempting to fetch stores data directly...");
     // Use our direct query function instead of getAllStores
     const stores = await getStoresDirectly();
-    console.log("Stores fetched successfully:", stores.length);
     
     return (
       <div>
@@ -164,7 +162,6 @@ export default async function AdminStoresPage() {
       </div>
     );
   } catch (error) {
-    console.error("Error in stores page:", error);
     // Instead of redirecting, show an error message
     return (
       <div>

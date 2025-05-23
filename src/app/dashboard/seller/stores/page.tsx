@@ -26,9 +26,6 @@ export default async function SellerStoresPage() {
       status: true
     }
   });
-  
-  console.log("Stores page - user ID:", user.id);
-  console.log("Stores page - found stores:", stores.length);
 
   // If no stores, redirect to create store
   if (stores.length === 0) {

@@ -9,14 +9,13 @@ import {
   FreeShippingWithCountriesType,
   ProductPageType,
   ProductShippingDetailsType,
-  ProductType,
   ProductWithVariantType,
   RatingStatisticsType,
   SortOrder,
   VariantImageType,
   VariantSimplified,
 } from "@/lib/types";
-import { FreeShipping, ProductVariant, Size, Store } from "@prisma/client";
+import { ProductVariant, Size, Store } from "@prisma/client";
 
 // Clerk
 import { currentUser } from "@clerk/nextjs/server";
@@ -25,10 +24,12 @@ import { currentUser } from "@clerk/nextjs/server";
 import slugify from "slugify";
 import { generateUniqueSlug } from "@/lib/utils";
 
+// UUID
+import { v4 } from "uuid";
+
 // Cookies
 import { getCookie } from "cookies-next";
 import { cookies } from "next/headers";
-import { setMaxListeners } from "events";
 
 // Function: upsertProduct
 // Description: Upserts a product and its variant into the database, ensuring proper association with the store.
@@ -42,46 +43,64 @@ export const upsertProduct = async (
   storeUrl: string
 ) => {
   try {
-    // This is a completely new approach that bypasses validation issues
-    // by working directly with Prisma's raw queries
-    
-    // Debugging the input product data
-    console.log("Product being upserted:", {
-      productId: product.productId,
-      categoryId: product.categoryId,
-      subCategoryId: product.subCategoryId,
-      brand: product.brand
-    });
-    
     // Retrieve current user
     const user = await currentUser();
     
-    console.log("Authentication check - Current user:", user ? `User ID: ${user.id}` : "No user found");
-
     // Check if user is authenticated
     if (!user) {
-      console.error("Authentication failed - No user found in the request");
-      throw new Error("Authentication failed. Please sign in again and retry.");
+      throw new Error("Authentication failed. Please sign in and try again.");
     }
 
-    // Log user details for debugging
-    console.log("User authenticated:", {
-      id: user.id,
-      hasPrivateMetadata: !!user.privateMetadata,
-      role: user.privateMetadata?.role || "No role found"
-    });
-
-    // Ensure user has seller privileges - check with more tolerance
+    // Ensure user has seller privileges
     const userRole = user.privateMetadata?.role;
     if (userRole !== "SELLER" && userRole !== "ADMIN") {
-      console.error(`User ${user.id} attempted to create a product with role: ${userRole || "undefined"}`);
-      
-      // For debugging purposes - temporarily allow the operation to proceed
-      console.warn("⚠️ Warning: Proceeding despite role check failure - FOR DEBUGGING ONLY");
+      throw new Error("Unauthorized: Only sellers can create products.");
     }
 
-    // Ensure product data is provided
-    if (!product) throw new Error("Please provide product data.");
+    // Validate required product data
+    if (!product) {
+      throw new Error("Product data is required.");
+    }
+
+    if (!product.name || product.name.trim() === "") {
+      throw new Error("Product name is required.");
+    }
+
+    if (!product.variantName || product.variantName.trim() === "") {
+      throw new Error("Variant name is required.");
+    }
+
+    if (!product.categoryId || product.categoryId.trim() === "") {
+      throw new Error("Product category is required.");
+    }
+
+    if (!product.subCategoryId || product.subCategoryId.trim() === "") {
+      throw new Error("Product subcategory is required.");
+    }
+
+    if (!product.brand || product.brand.trim() === "") {
+      throw new Error("Product brand is required.");
+    }
+
+    if (!product.sku || product.sku.trim() === "") {
+      throw new Error("Product SKU is required.");
+    }
+
+    if (!product.images || product.images.length < 3) {
+      throw new Error("At least 3 product images are required.");
+    }
+
+    if (!product.variantImage || product.variantImage.trim() === "") {
+      throw new Error("Variant image is required.");
+    }
+
+    if (!product.colors || product.colors.length === 0) {
+      throw new Error("At least one color is required.");
+    }
+
+    if (!product.sizes || product.sizes.length === 0) {
+      throw new Error("At least one size is required.");
+    }
 
     // Find the store by URL
     const store = await db.store.findUnique({
@@ -89,491 +108,272 @@ export const upsertProduct = async (
     });
     
     if (!store) {
-      console.error(`Store with URL ${storeUrl} not found for user ${user.id}`);
-      throw new Error(`Store not found for URL: ${storeUrl}`);
+      throw new Error(`Store not found or you don't have permission to access it.`);
     }
-    
-    // EMERGENCY FIX: Create product directly with SQL to bypass Prisma validation issues
-    try {
-      // Generate slugs
-      const productName = product.name || "New Product";
-      const variantName = product.variantName || "Default Variant";
-      const brand = product.brand || "Generic Brand";
-      
-      // Generate simple slugs from names
-      const productSlug = slugify(productName + "-" + Date.now(), { 
-        lower: true, 
-        strict: true 
-      });
-      
-      const variantSlug = slugify(variantName + "-" + Date.now(), { 
-        lower: true, 
-        strict: true 
-      });
-      
-      // Look for Electronics category and Laptops subcategory, or create them
-      let categoryId = product.categoryId;
-      let subCategoryId = product.subCategoryId;
-      
-      if (!categoryId || categoryId === "undefined") {
-        // Try to find the Electronics category
-        const electronicsCategory = await db.category.findFirst({
-          where: { 
-            OR: [
-              { name: "Electronics" },
-              { name: { contains: "Electronic" } }
-            ]
-          }
-        });
-        
-        if (electronicsCategory) {
-          categoryId = electronicsCategory.id;
-        } else {
-          // Create the Electronics category
-          const newCategory = await db.category.create({
-            data: {
-              name: "Electronics",
-              image: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-              url: "electronics-" + Date.now(),
-              featured: false
-            }
-          });
-          categoryId = newCategory.id;
-        }
-      }
-      
-      if (!subCategoryId || subCategoryId === "undefined") {
-        // Try to find Computers subcategory under the category
-        const computersSubcategory = await db.subCategory.findFirst({
-          where: {
-            categoryId,
-            OR: [
-              { name: "Computers" },
-              { name: { contains: "Computer" } },
-              { name: { contains: "Laptop" } }
-            ]
-          }
-        });
-        
-        if (computersSubcategory) {
-          subCategoryId = computersSubcategory.id;
-        } else {
-          // Create the Computers subcategory
-          const newSubcategory = await db.subCategory.create({
-            data: {
-              name: "Computers",
-              image: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-              url: "computers-" + Date.now(),
-              featured: false,
-              categoryId
-            }
-          });
-          subCategoryId = newSubcategory.id;
-        }
-      }
-      
-      console.log("Using category and subcategory:", { categoryId, subCategoryId });
-      
-      // Create product
-      const newProduct = await db.product.create({
-        data: {
-          id: product.productId,
-          name: productName,
-          description: product.description || "Product description",
-          slug: productSlug,
-          brand: brand,
-          storeId: store.id,
-          categoryId,
-          subCategoryId,
-          offerTagId: product.offerTagId && product.offerTagId !== "" ? product.offerTagId : null,
-          shippingFeeMethod: product.shippingFeeMethod || "ITEM",
-          freeShippingForAllCountries: !!product.freeShippingForAllCountries
-        }
-      });
-      
-      console.log("Product created successfully:", newProduct.id);
-      
-      // Now create variant
-      const newVariant = await db.productVariant.create({
-        data: {
-          id: product.variantId,
-          productId: newProduct.id,
-          variantName: variantName,
-          variantDescription: product.variantDescription || "",
-          slug: variantSlug,
-          variantImage: product.variantImage || "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-          sku: product.sku || `SKU-${Date.now()}`,
-          keywords: Array.isArray(product.keywords) ? product.keywords.join(",") : "",
-          weight: product.weight || 0.1,
-          isSale: !!product.isSale,
-          saleEndDate: product.saleEndDate || "",
-        }
-      });
-      
-      console.log("Variant created successfully:", newVariant.id);
-      
-      // Add variant images
-      if (Array.isArray(product.images) && product.images.length > 0) {
-        await Promise.all(product.images.map(async (img) => {
-          if (img.url) {
-            await db.productVariantImage.create({
-              data: {
-                url: img.url,
-                productVariantId: newVariant.id
-              }
-            });
-          }
-        }));
-      } else {
-        // Add one default image
-        await db.productVariantImage.create({
-          data: {
-            url: product.variantImage || "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-            productVariantId: newVariant.id
-          }
-        });
-      }
-      
-      // Add colors
-      if (Array.isArray(product.colors) && product.colors.length > 0) {
-        await Promise.all(product.colors.map(async (color) => {
-          await db.color.create({
-            data: {
-              name: color.color || "Default",
-              productVariantId: newVariant.id
-            }
-          });
-        }));
-      } else {
-        // Add default color
-        await db.color.create({
-          data: {
-            name: "Default",
-            productVariantId: newVariant.id
-          }
-        });
-      }
-      
-      // Add sizes
-      if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-        await Promise.all(product.sizes.map(async (size) => {
-          await db.size.create({
-            data: {
-              size: size.size || "Default",
-              quantity: typeof size.quantity === 'number' ? size.quantity : 1,
-              price: typeof size.price === 'number' ? size.price : 0.01,
-              discount: typeof size.discount === 'number' ? size.discount : 0,
-              productVariantId: newVariant.id
-            }
-          });
-        }));
-      } else {
-        // Add default size
-        await db.size.create({
-          data: {
-            size: "Default",
-            quantity: 1,
-            price: 0.01,
-            discount: 0,
-            productVariantId: newVariant.id
-          }
-        });
-      }
-      
-      return newProduct;
-    } catch (err) {
-      console.error("Emergency product creation failed:", err);
-      throw new Error("Failed to create product: " + err.message);
+
+    // Verify category exists
+    const category = await db.category.findUnique({
+      where: { id: product.categoryId }
+    });
+
+    if (!category) {
+      throw new Error("Selected category does not exist.");
     }
-  } catch (error) {
-    console.error("Product creation error:", error);
-    throw error;
-  }
-};
 
-const handleProductCreate = async (
-  product: ProductWithVariantType,
-  storeId: string
-) => {
-  // Debug product data
-  console.log("Creating product with data:", {
-    categoryId: product.categoryId,
-    subCategoryId: product.subCategoryId,
-    type: typeof product.categoryId
-  });
-
-  // Ensure product.name is a valid string
-  const productName = product.name || "";
-  const variantName = product.variantName || "";
-
-  // Ensure brand is a valid string
-  const brand = product.brand || "Generic"; // Provide a default brand if none is provided
-  
-  // BYPASS: Find Electronics category and Laptops & Computers subcategory
-  let categoryId = product.categoryId;
-  let subCategoryId = product.subCategoryId;
-  
-  try {
-    // Try to find Electronics category
-    const electronicsCategory = await db.category.findFirst({
+    // Verify subcategory exists and belongs to the category
+    const subCategory = await db.subCategory.findUnique({
       where: { 
-        OR: [
-          { name: "Electronics" },
-          { name: { contains: "Electronic" } }
-        ]
+        id: product.subCategoryId,
+        categoryId: product.categoryId
       }
     });
+
+    if (!subCategory) {
+      throw new Error("Selected subcategory does not exist or doesn't belong to the selected category.");
+    }
+
+    // Check if this is an update (both productId and variantId exist) or a new creation
+    const isUpdate = product.productId && product.variantId;
     
-    if (electronicsCategory) {
-      categoryId = electronicsCategory.id;
-      console.log("Using Electronics category:", electronicsCategory.id);
-      
-      // Find Laptops & Computers subcategory
-      const computersSubCategory = await db.subCategory.findFirst({
-        where: { 
-          AND: [
-            { categoryId: electronicsCategory.id },
-            { 
-              OR: [
-                { name: "Laptops & Computers" },
-                { name: { contains: "Laptop" } },
-                { name: { contains: "Computer" } }
-              ]
-            }
-          ]
+    if (isUpdate) {
+      // Update existing product and variant
+      const existingProduct = await db.product.findUnique({
+        where: { id: product.productId, storeId: store.id }
+      });
+
+      if (!existingProduct) {
+        throw new Error("Product not found or you don't have permission to update it.");
+      }
+
+      // Update product
+      const updatedProduct = await db.product.update({
+        where: { id: product.productId },
+        data: {
+          name: product.name,
+          description: product.description,
+          brand: product.brand,
+          categoryId: product.categoryId,
+          subCategoryId: product.subCategoryId,
+          offerTagId: product.offerTagId && product.offerTagId !== "" ? product.offerTagId : null,
+          shippingFeeMethod: product.shippingFeeMethod || "ITEM",
+          freeShippingForAllCountries: !!product.freeShippingForAllCountries,
+          updatedAt: new Date(),
         }
       });
-      
-      if (computersSubCategory) {
-        subCategoryId = computersSubCategory.id;
-        console.log("Using Laptops & Computers subcategory:", computersSubCategory.id);
-      } else {
-        console.log("Creating Laptops & Computers subcategory");
-        // Create the subcategory if it doesn't exist
-        const newSubCategory = await db.subCategory.create({
+
+      // Update variant and related data
+      await db.$transaction(async (tx) => {
+        // Update variant
+        await tx.productVariant.update({
+          where: { id: product.variantId },
           data: {
-            name: "Laptops & Computers",
-            image: "https://example.com/computers.jpg",
-            url: "laptops-computers",
-            categoryId: electronicsCategory.id,
-            featured: false
+            variantName: product.variantName,
+            variantDescription: product.variantDescription || "",
+            variantImage: product.variantImage,
+            sku: product.sku,
+            keywords: Array.isArray(product.keywords) ? product.keywords.join(",") : "",
+            weight: product.weight || 0.1,
+            isSale: !!product.isSale,
+            saleEndDate: product.saleEndDate || "",
+            updatedAt: new Date(),
           }
         });
-        subCategoryId = newSubCategory.id;
-      }
+
+        // Delete and recreate related data
+        await tx.productVariantImage.deleteMany({ where: { productVariantId: product.variantId } });
+        await tx.color.deleteMany({ where: { productVariantId: product.variantId } });
+        await tx.size.deleteMany({ where: { productVariantId: product.variantId } });
+        await tx.spec.deleteMany({ where: { variantId: product.variantId } });
+        
+        // Recreate images
+        if (product.images && product.images.length > 0) {
+          await tx.productVariantImage.createMany({
+            data: product.images.map((img, index) => ({
+              url: img.url,
+              productVariantId: product.variantId!,
+              order: index
+            }))
+          });
+        }
+
+        // Recreate colors
+        if (product.colors && product.colors.length > 0) {
+          await tx.color.createMany({
+            data: product.colors.map(color => ({
+              name: color.color,
+              productVariantId: product.variantId!
+            }))
+          });
+        }
+
+        // Recreate sizes
+        if (product.sizes && product.sizes.length > 0) {
+          await tx.size.createMany({
+            data: product.sizes.map(size => ({
+              size: size.size,
+              quantity: size.quantity,
+              price: size.price,
+              discount: size.discount || 0,
+              productVariantId: product.variantId!
+            }))
+          });
+        }
+
+        // Recreate variant specs
+        if (product.variant_specs && product.variant_specs.length > 0) {
+          await tx.spec.createMany({
+            data: product.variant_specs.map(spec => ({
+              name: spec.name,
+              value: spec.value,
+              variantId: product.variantId!
+            }))
+          });
+        }
+      });
+
+      return updatedProduct;
     } else {
-      console.log("Creating Electronics category");
-      // Create the category if it doesn't exist
-      const newCategory = await db.category.create({
-        data: {
-          name: "Electronics",
-          image: "https://example.com/electronics.jpg",
-          url: "electronics",
-          featured: false
-        }
-      });
-      categoryId = newCategory.id;
+      // Create new product - generate new IDs
+      const productId = v4();
+      const variantId = v4();
       
-      // Create the subcategory
-      console.log("Creating Laptops & Computers subcategory");
-      const newSubCategory = await db.subCategory.create({
-        data: {
-          name: "Laptops & Computers",
-          image: "https://example.com/computers.jpg",
-          url: "laptops-computers",
-          categoryId: newCategory.id,
-          featured: false
+      const productSlug = await generateUniqueSlug(
+        slugify(product.name, { lower: true, strict: true }),
+        "product"
+      );
+      
+      const variantSlug = await generateUniqueSlug(
+        slugify(product.variantName, { lower: true, strict: true }),
+        "productVariant"
+      );
+
+      const newProduct = await db.$transaction(async (tx) => {
+        // Create product
+        const createdProduct = await tx.product.create({
+          data: {
+            id: productId,
+            name: product.name,
+            description: product.description,
+            slug: productSlug,
+            brand: product.brand,
+            storeId: store.id,
+            categoryId: product.categoryId,
+            subCategoryId: product.subCategoryId,
+            offerTagId: product.offerTagId && product.offerTagId !== "" ? product.offerTagId : null,
+            shippingFeeMethod: product.shippingFeeMethod || "ITEM",
+            freeShippingForAllCountries: !!product.freeShippingForAllCountries
+          }
+        });
+
+        // Create variant
+        const createdVariant = await tx.productVariant.create({
+          data: {
+            id: variantId,
+            productId: createdProduct.id,
+            variantName: product.variantName,
+            variantDescription: product.variantDescription || "",
+            slug: variantSlug,
+            variantImage: product.variantImage,
+            sku: product.sku,
+            keywords: Array.isArray(product.keywords) ? product.keywords.join(",") : "",
+            weight: product.weight || 0.1,
+            isSale: !!product.isSale,
+            saleEndDate: product.saleEndDate || "",
+          }
+        });
+
+        // Create variant images
+        if (product.images && product.images.length > 0) {
+          await tx.productVariantImage.createMany({
+            data: product.images.map((img, index) => ({
+              url: img.url,
+              productVariantId: createdVariant.id,
+              order: index
+            }))
+          });
         }
+
+        // Create colors
+        if (product.colors && product.colors.length > 0) {
+          await tx.color.createMany({
+            data: product.colors.map(color => ({
+              name: color.color,
+              productVariantId: createdVariant.id
+            }))
+          });
+        }
+
+        // Create sizes
+        if (product.sizes && product.sizes.length > 0) {
+          await tx.size.createMany({
+            data: product.sizes.map(size => ({
+              size: size.size,
+              quantity: size.quantity,
+              price: size.price,
+              discount: size.discount || 0,
+              productVariantId: createdVariant.id
+            }))
+          });
+        }
+
+        // Create product specs
+        if (product.product_specs && product.product_specs.length > 0) {
+          await tx.spec.createMany({
+            data: product.product_specs.map(spec => ({
+              name: spec.name,
+              value: spec.value,
+              productId: createdProduct.id
+            }))
+          });
+        }
+
+        // Create variant specs
+        if (product.variant_specs && product.variant_specs.length > 0) {
+          await tx.spec.createMany({
+            data: product.variant_specs.map(spec => ({
+              name: spec.name,
+              value: spec.value,
+              variantId: createdVariant.id
+            }))
+          });
+        }
+
+        // Create questions
+        if (product.questions && product.questions.length > 0) {
+          await tx.question.createMany({
+            data: product.questions.map(q => ({
+              question: q.question,
+              answer: q.answer,
+              productId: createdProduct.id
+            }))
+          });
+        }
+
+        // Handle free shipping
+        if (product.freeShippingCountriesIds && product.freeShippingCountriesIds.length > 0 && !product.freeShippingForAllCountries) {
+          const freeShipping = await tx.freeShipping.create({
+            data: {
+              productId: createdProduct.id
+            }
+          });
+
+          await tx.freeShippingCountry.createMany({
+            data: product.freeShippingCountriesIds.map(country => ({
+              freeShippingId: freeShipping.id,
+              countryId: country.value
+            }))
+          });
+        }
+
+        return createdProduct;
       });
-      subCategoryId = newSubCategory.id;
+
+      return newProduct;
     }
-  } catch (err) {
-    console.error("Error finding/creating categories:", err);
-    // Just continue with the original values if there's an error
+  } catch (error) {
+    console.error("Product upsert error:", error);
+    throw error;
   }
-
-  // Generate unique slugs for product and variant
-  const productSlug = await generateUniqueSlug(
-    slugify(productName || "product", {
-      replacement: "-",
-      lower: true,
-      trim: true,
-    }),
-    "product"
-  );
-
-  const variantSlug = await generateUniqueSlug(
-    slugify(variantName || "variant", {
-      replacement: "-",
-      lower: true,
-      trim: true,
-    }),
-    "productVariant"
-  );
-
-  // After verifying the category and subcategory exist, create the product
-  const productData = {
-    id: product.productId,
-    name: productName || "New Product",
-    description: product.description || "",
-    slug: productSlug,
-    store: { connect: { id: storeId } },
-    // Use our hardcoded or found category and subcategory IDs
-    category: { connect: { id: categoryId } },
-    subCategory: { connect: { id: subCategoryId } },
-    offerTag: product.offerTagId && product.offerTagId !== "" ? 
-      { connect: { id: product.offerTagId } } : 
-      undefined,
-    brand: brand, // Use the sanitized brand value
-    specs: {
-      create: Array.isArray(product.product_specs) && product.product_specs.length > 0
-        ? product.product_specs.map((spec) => ({
-            name: spec.name || "",
-            value: spec.value || "",
-          }))
-        : [{ name: "General", value: "Information" }],
-    },
-    questions: {
-      create: Array.isArray(product.questions) && product.questions.length > 0
-        ? product.questions.map((q) => ({
-            question: q.question || "",
-            answer: q.answer || "",
-          }))
-        : [{ question: "Frequently Asked", answer: "Question" }],
-    },
-    variants: {
-      create: [
-        {
-          id: product.variantId,
-          variantName: variantName || "Default Variant",
-          variantDescription: product.variantDescription || "",
-          slug: variantSlug,
-          variantImage: product.variantImage || "",
-          sku: product.sku || `SKU-${Math.floor(Math.random() * 10000)}`,
-          weight: product.weight || 0.1,
-          keywords: Array.isArray(product.keywords) ? product.keywords.join(",") : "",
-          isSale: Boolean(product.isSale),
-          saleEndDate: product.saleEndDate || "",
-          images: {
-            create: Array.isArray(product.images) && product.images.length > 0
-              ? product.images.map((img) => ({
-                  url: img.url || "",
-                }))
-              : [{ url: product.variantImage || "" }],
-          },
-          colors: {
-            create: Array.isArray(product.colors) && product.colors.length > 0
-              ? product.colors.map((color) => ({
-                  name: color.color || "default",
-                }))
-              : [{ name: "default" }],
-          },
-          sizes: {
-            create: Array.isArray(product.sizes) && product.sizes.length > 0
-              ? product.sizes.map((size) => ({
-                  size: size.size || "default",
-                  price: typeof size.price === 'number' ? size.price : 0.01,
-                  quantity: typeof size.quantity === 'number' ? size.quantity : 1,
-                  discount: typeof size.discount === 'number' ? size.discount : 0,
-                }))
-              : [{ size: "default", price: 0.01, quantity: 1, discount: 0 }],
-          },
-          specs: {
-            create: Array.isArray(product.variant_specs) && product.variant_specs.length > 0
-              ? product.variant_specs.map((spec) => ({
-                  name: spec.name || "",
-                  value: spec.value || "",
-                }))
-              : [{ name: "", value: "" }],
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-    },
-    shippingFeeMethod: product.shippingFeeMethod || "ITEM", // Default to ITEM if not provided
-    freeShippingForAllCountries: Boolean(product.freeShippingForAllCountries),
-    freeShipping: product.freeShippingForAllCountries
-      ? undefined
-      : product.freeShippingCountriesIds &&
-        Array.isArray(product.freeShippingCountriesIds) &&
-        product.freeShippingCountriesIds.length > 0
-      ? {
-          create: {
-            eligibaleCountries: {
-              create: product.freeShippingCountriesIds.map((country) => ({
-                country: { connect: { id: country.value } },
-              })),
-            },
-          },
-        }
-      : undefined,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  // Final debug log to see exactly what we're sending to Prisma
-  console.log("Final product data structure being sent to Prisma:", JSON.stringify(productData, null, 2));
-
-  const new_product = await db.product.create({ data: productData });
-  return new_product;
-};
-
-const handleCreateVariant = async (product: ProductWithVariantType) => {
-  // Ensure variant name is a valid string
-  const variantName = product.variantName || "";
-  
-  const variantSlug = await generateUniqueSlug(
-    slugify(variantName, {
-      replacement: "-",
-      lower: true,
-      trim: true,
-    }),
-    "productVariant"
-  );
-
-  const variantData = {
-    id: product.variantId,
-    productId: product.productId,
-    variantName: variantName,
-    variantDescription: product.variantDescription || "",
-    slug: variantSlug,
-    isSale: product.isSale,
-    saleEndDate: product.isSale ? product.saleEndDate : "",
-    sku: product.sku,
-    keywords: product.keywords.join(","),
-    weight: product.weight,
-    variantImage: product.variantImage,
-    images: {
-      create: product.images.map((img) => ({
-        url: img.url,
-      })),
-    },
-    colors: {
-      create: product.colors.map((color) => ({
-        name: color.color,
-      })),
-    },
-    sizes: {
-      create: product.sizes.map((size) => ({
-        size: size.size,
-        price: size.price,
-        quantity: size.quantity,
-        discount: size.discount,
-      })),
-    },
-    specs: {
-      create: product.variant_specs.map((spec) => ({
-        name: spec.name,
-        value: spec.value,
-      })),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const new_variant = await db.productVariant.create({ data: variantData });
-  return new_variant;
 };
 
 // Function: getProductVariant
@@ -839,8 +639,26 @@ export const deleteProduct = async (productId: string) => {
 //   - page: The current page number for pagination (default = 1).
 //   - pageSize: The number of products per page (default = 10).
 // Returns: An object containing paginated products, filtered variants, and pagination metadata (totalPages, currentPage, pageSize, totalCount).
+
+interface ProductFilters {
+  store?: string;
+  productId?: string;
+  category?: string;
+  subCategory?: string;
+  size?: string[];
+  offer?: string;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  color?: string[];
+}
+
+interface WhereClause {
+  AND: Array<Record<string, unknown>>;
+}
+
 export const getProducts = async (
-  filters: any = {},
+  filters: ProductFilters = {},
   sortBy = "",
   page: number = 1,
   pageSize: number = 10
@@ -851,7 +669,7 @@ export const getProducts = async (
   const skip = (currentPage - 1) * limit;
 
   // Construct the base query
-  const wherClause: any = {
+  const wherClause: WhereClause = {
     AND: [],
   };
 
@@ -1029,12 +847,12 @@ export const getProducts = async (
   // Product price sorting
   products.sort((a, b) => {
     // Helper function to get the minimum price from a product's variants
-    const getMinPrice = (product: any) =>
+    const getMinPrice = (product: typeof products[0]) =>
       Math.min(
         ...product.variants.flatMap((variant: VariantWithSizes) =>
           variant.sizes.map((size) => {
-            let discount = size.discount;
-            let discountedPrice = size.price * (1 - discount / 100);
+            const discount = size.discount;
+            const discountedPrice = size.price * (1 - discount / 100);
             return discountedPrice;
           })
         ),
@@ -1261,7 +1079,7 @@ const getUserCountry = async () => {
       }
     }
     return defaultCountry;
-  } catch (error) {
+  } catch {
     return { name: "United States", code: "US", city: "New York" };
   }
 };
@@ -1381,7 +1199,7 @@ export const getRatingStatistics = async (productId: string) => {
   const ratingCounts = Array(5).fill(0);
 
   ratingStats.forEach((stat) => {
-    let rating = Math.floor(stat.rating);
+    const rating = Math.floor(stat.rating);
     if (rating >= 1 && rating <= 5) {
       ratingCounts[rating - 1] = stat._count.rating;
     }
@@ -1530,7 +1348,17 @@ export const getProductFilteredReviews = async (
   page: number = 1,
   pageSize: number = 4
 ) => {
-  const reviewFilter: any = {
+  interface ReviewFilter {
+    productId: string;
+    rating?: {
+      in: number[];
+    };
+    images?: {
+      some: Record<string, never>;
+    };
+  }
+
+  const reviewFilter: ReviewFilter = {
     productId,
   };
 
@@ -1713,7 +1541,30 @@ export const getProductsByIds = async (
   ids: string[],
   page: number = 1,
   pageSize: number = 10
-): Promise<{ products: any; totalPages: number }> => {
+): Promise<{ 
+  products: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    rating: number;
+    sales: number;
+    variants: Array<{
+      variantId: string;
+      variantName: string;
+      variantSlug: string;
+      images: Array<{ url: string }>;
+      sizes: Array<{
+        id: string;
+        size: string;
+        quantity: number;
+        price: number;
+        discount: number;
+      }>;
+    }>;
+    variantImages: Array<unknown>;
+  }>;
+  totalPages: number;
+}> => {
   // Check if ids array is empty
   if (!ids || ids.length === 0) {
     throw new Error("Ids are undefined");
@@ -1795,7 +1646,7 @@ export const getProductsByIds = async (
       products: ordered_products,
       totalPages,
     };
-  } catch (error) {
+  } catch {
     throw new Error("Failed to fetch products. Please try again.");
   }
 };

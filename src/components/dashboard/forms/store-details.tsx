@@ -115,18 +115,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
     try {
       setIsSubmitting(true);
       
-      // Log the current state values
-      console.log("Form state:", {
-        name: storeName,
-        description: storeDescription,
-        email: storeEmail,
-        phone: storePhone,
-        url: storeUrl,
-        featured: storeFeatured,
-        logo: logoImages,
-        cover: coverImages
-      });
-      
       // Check if required fields have values
       if (!storeName || storeName.trim() === "") {
         toast({
@@ -213,14 +201,9 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
         updatedAt: new Date(),
       };
 
-      // Log the payload for debugging
-      console.log("Store payload:", storePayload);
-
       // Upserting store data
       const response = await upsertStore(storePayload);
 
-      // Log the response from the server
-      console.log("Server response:", response);
 
       // Displaying success message
       toast({
@@ -298,7 +281,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
                   value={storeName}
                   onChange={(e) => {
                     setStoreName(e.target.value);
-                    console.log("Name change:", e.target.value);
                   }}
                   disabled={isLoading}
                   required 
@@ -313,7 +295,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
                   value={storeDescription}
                   onChange={(e) => {
                     setStoreDescription(e.target.value);
-                    console.log("Description change:", e.target.value);
                   }}
                   disabled={isLoading}
                   required 
@@ -330,7 +311,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
                     value={storeEmail}
                     onChange={(e) => {
                       setStoreEmail(e.target.value);
-                      console.log("Email change:", e.target.value);
                     }}
                     disabled={isLoading}
                     required 
@@ -343,7 +323,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
                     value={storePhone}
                     onChange={(e) => {
                       setStorePhone(e.target.value);
-                      console.log("Phone change:", e.target.value);
                     }}
                     disabled={isLoading}
                     required 
@@ -359,7 +338,6 @@ const StoreDetails: FC<StoreDetailsProps> = ({ data }) => {
                   value={storeUrl}
                   onChange={(e) => {
                     setStoreUrl(e.target.value);
-                    console.log("URL change:", e.target.value);
                   }}
                   disabled={isLoading}
                   required 

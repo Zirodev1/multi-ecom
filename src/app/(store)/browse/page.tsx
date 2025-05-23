@@ -9,12 +9,15 @@ import { getFilteredSizes } from "@/queries/size";
 // Updated for Next.js 15 compatibility
 interface PageProps {
   params: Record<string, string>;
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function BrowsePage({
   searchParams,
 }: PageProps) {
+  // Await searchParams first
+  const searchParamsResolved = await searchParams;
+  
   const {
     category,
     offer,
@@ -25,7 +28,7 @@ export default async function BrowsePage({
     maxPrice,
     minPrice,
     color,
-  } = searchParams as unknown as FiltersQueryType;
+  } = searchParamsResolved as unknown as FiltersQueryType;
   
   const products_data = await getProducts(
     {
@@ -51,28 +54,61 @@ export default async function BrowsePage({
   const { products } = products_data;
 
   return (
-    <div className="relative h-screen overflow-hidden">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="fixed top-0 left-0 w-full z-10">
-        <Header />
-      </div>
-
-      {/* Filters Sidebar */}
-      <div className="fixed top-[124px] lg:top-16 left-2 md:left-4 pt-4 h-[calc(100vh-64px)] overflow-auto scrollbar">
-        <ProductFilters queries={searchParams as unknown as FiltersQueryType} />
-      </div>
+      <Header />
+      
       {/* Main Content */}
-      <div className="ml-[190px] md:ml-[220px] pt-[140px] lg:pt-20">
-        {/* Sort Section */}
-        <div className="sticky top-[64px] z-10 px-4 py-2 flex items-center">
-          <ProductSort />
-        </div>
+      <div className="container mx-auto px-4 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <ProductFilters queries={searchParamsResolved as unknown as FiltersQueryType} />
+            </div>
+          </div>
+          
+          {/* Main Content Area */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Sort Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center space-x-4">
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    {category || subCategory ? 
+                      `${category ? category.charAt(0).toUpperCase() + category.slice(1) : ''} ${subCategory ? '- ' + subCategory.charAt(0).toUpperCase() + subCategory.slice(1) : ''}`.trim()
+                      : 'All Products'
+                    }
+                  </h1>
+                  <span className="text-sm text-gray-500">
+                    ({products.length} {products.length === 1 ? 'product' : 'products'})
+                  </span>
+                </div>
+                <ProductSort />
+              </div>
+            </div>
 
-        {/* Product List */}
-        <div className="mt-4 px-4 w-full overflow-y-auto max-h-[calc(100vh-155px)] pb-28 scrollbar flex flex-wrap">
-          {products.map((product, i) => (
-            <ProductCard key={product.id + product.slug} product={product} />
-          ))}
+            {/* Product Grid */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              {products.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {products.map((product) => (
+                    <ProductCard key={product.id + product.slug} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8-4 4-4-4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                  <p className="text-gray-500">Try adjusting your filters or search terms to find what you're looking for.</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

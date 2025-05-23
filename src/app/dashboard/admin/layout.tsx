@@ -23,8 +23,6 @@ export default async function AdminDashboardLayout({
   
   // If user is authenticated and has ADMIN role, show admin dashboard
   if (user && user.privateMetadata.role === "ADMIN") {
-    console.log("Real admin user authenticated:", user.id);
-    
     return (
       <div className="min-h-screen bg-background flex">
         {/* Sidebar */}
@@ -47,7 +45,6 @@ export default async function AdminDashboardLayout({
   
   // If demo user with admin role, allow access
   if (isDemoMode && demoRole === "ADMIN") {
-    console.log("Using demo mode for admin dashboard - no real admin authenticated");
     
     return (
       <div className="min-h-screen bg-background flex">

@@ -22,7 +22,6 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.log(error);
     return new NextResponse("Couldn't save data", {
       status: 500,
     });

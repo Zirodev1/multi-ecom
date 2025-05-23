@@ -23,12 +23,8 @@ export default async function SellerDashboardLayout({
   const isDemoMode = cookieStore.get(DEMO_MODE_COOKIE)?.value === "true";
   const demoRole = cookieStore.get(DEMO_ROLE_COOKIE)?.value;
   
-  console.log("Seller Dashboard Layout - Is Demo Mode:", isDemoMode);
-  console.log("Seller Dashboard Layout - Demo Role:", demoRole);
-  
   // If demo user with seller role, allow access
   if (isDemoMode && demoRole === "SELLER") {
-    console.log("Using demo mode for seller dashboard");
     return (
       <div className="w-full h-full">
         {/* Sidebar */}
@@ -44,9 +40,6 @@ export default async function SellerDashboardLayout({
   
   // Get current user and verify role
   const user = await currentUser();
-  
-  console.log("Seller Dashboard Layout - User:", user ? user.id : "Not authenticated");
-  console.log("Seller Dashboard Layout - User Role:", user?.privateMetadata?.role || "No role");
   
   // This may allow all users to access seller dashboard if role check is failing
   // Block non sellers from accessing the seller dashboard
@@ -65,9 +58,6 @@ export default async function SellerDashboardLayout({
       status: true
     }
   });
-  
-  console.log("Seller Dashboard Layout - Stores found:", stores.length);
-  console.log("Seller Dashboard Layout - Store details:", JSON.stringify(stores.map(s => ({name: s.name, url: s.url}))));
   
   return (
     <div className="w-full h-full">

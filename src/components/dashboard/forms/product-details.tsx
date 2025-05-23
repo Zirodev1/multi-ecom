@@ -238,86 +238,150 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
     try {
-      // Debug values with detailed information
-      console.log("Form values being submitted:", {
-        categoryId: values.categoryId,
-        subCategoryId: values.subCategoryId,
-        categoryIdType: typeof values.categoryId,
-        subCategoryIdType: typeof values.subCategoryId,
-        isNewVariantPage,
-        formStateIsDirty: form.formState.isDirty,
-        formStateErrors: form.formState.errors
-      });
+      // Get the current form values directly from the form state (most reliable)
+      const currentValues = form.getValues();
       
-      // IMPORTANT: If we still don't have category IDs, check directly from the select elements
-      if (!values.categoryId && !isNewVariantPage) {
-        // Try to get the category from the form element
-        console.log("Categories available:", categories.map(c => ({ id: c.id, name: c.name })));
-        console.log("Selected categoryId from form state:", form.getValues().categoryId);
+      // Use current form values as the primary source of truth
+      // Only fall back to 'values' parameter if current values are missing
+      const finalValues = {
+        // Start with parameter values as base
+        ...values,
+        // Override with current form values (more reliable)
+        ...currentValues,
+        // Ensure arrays and objects are properly handled
+        images: currentValues.images?.length > 0 ? currentValues.images : (values.images || []),
+        colors: currentValues.colors?.length > 0 ? currentValues.colors : (values.colors || []),
+        sizes: currentValues.sizes?.length > 0 ? currentValues.sizes : (values.sizes || []),
+        variantImage: currentValues.variantImage?.length > 0 ? currentValues.variantImage : (values.variantImage || []),
+      };
+
+      // Validate required fields before submission
+      if (!isNewVariantPage) {
+        if (!finalValues.categoryId || finalValues.categoryId === "" || finalValues.categoryId === "none") {
+          toast({
+            variant: "destructive",
+            title: "Missing Category",
+            description: "Please select a product category before submitting.",
+          });
+          return;
+        }
         
-        // If we still don't have a category, use the first one available
-        if (categories.length > 0) {
-          values.categoryId = categories[0].id; 
-          console.log("Force-setting categoryId to first available:", values.categoryId);
+        if (!finalValues.subCategoryId || finalValues.subCategoryId === "" || finalValues.subCategoryId === "none") {
+          toast({
+            variant: "destructive",
+            title: "Missing Subcategory", 
+            description: "Please select a product subcategory before submitting.",
+          });
+          return;
         }
       }
-      
-      // IMPORTANT: If we still don't have subcategory ID, check directly from the select elements
-      if (!values.subCategoryId && !isNewVariantPage) {
-        // Try to get the subcategory from the form element
-        console.log("Subcategories available:", subCategories.map(c => ({ id: c.id, name: c.name })));
-        console.log("Selected subCategoryId from form state:", form.getValues().subCategoryId);
-        
-        // If we still don't have a subcategory, use the first one available
-        if (subCategories.length > 0) {
-          values.subCategoryId = subCategories[0].id;
-          console.log("Force-setting subCategoryId to first available:", values.subCategoryId);
-        }
+
+      // Validate product name
+      if (!finalValues.name || finalValues.name.trim() === "") {
+        toast({
+          variant: "destructive",
+          title: "Missing Product Name",
+          description: "Please enter a product name.",
+        });
+        return;
       }
-      
+
+      // Validate variant name
+      if (!finalValues.variantName || finalValues.variantName.trim() === "") {
+        toast({
+          variant: "destructive",
+          title: "Missing Variant Name",
+          description: "Please enter a variant name.",
+        });
+        return;
+      }
+
+      // Validate images
+      if (!finalValues.images || finalValues.images.length < 3) {
+        toast({
+          variant: "destructive",
+          title: "Missing Images",
+          description: "Please upload at least 3 product images.",
+        });
+        return;
+      }
+
+      // Validate variant image
+      if (!finalValues.variantImage || finalValues.variantImage.length === 0 || !finalValues.variantImage[0]?.url) {
+        toast({
+          variant: "destructive",
+          title: "Missing Variant Image",
+          description: "Please upload a variant image.",
+        });
+        return;
+      }
+
+      // Validate colors
+      if (!finalValues.colors || finalValues.colors.length === 0 || finalValues.colors.some(c => !c.color)) {
+        toast({
+          variant: "destructive",
+          title: "Missing Colors",
+          description: "Please add at least one color.",
+        });
+        return;
+      }
+
+      // Validate sizes
+      if (!finalValues.sizes || finalValues.sizes.length === 0 || finalValues.sizes.some(s => !s.size || s.price <= 0 || s.quantity <= 0)) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Sizes",
+          description: "Please add at least one size with valid price and quantity.",
+        });
+        return;
+      }
+
       // If it's a new variant for an existing product, ensure we use the existing product's brand
-      const brandValue = isNewVariantPage && data?.brand ? data.brand : values.brand;
+      const brandValue = isNewVariantPage && data?.brand ? data.brand : finalValues.brand;
+      
+      // Prepare the product data with proper validation
+      const productData = {
+        // Only set IDs if we're updating an existing product
+        ...(data?.productId && data?.variantId ? {
+          productId: data.productId,
+          variantId: data.variantId,
+        } : {}),
+        name: finalValues.name || "",
+        description: finalValues.description || "",
+        variantName: finalValues.variantName || "",
+        variantDescription: finalValues.variantDescription || "",
+        images: finalValues.images.map(img => ({ url: img.url })),
+        variantImage: finalValues.variantImage[0].url,
+        categoryId: finalValues.categoryId || "",
+        subCategoryId: finalValues.subCategoryId || "",
+        offerTagId: finalValues.offerTagId === "none" ? "" : (finalValues.offerTagId || ""),
+        isSale: finalValues.isSale || false,
+        saleEndDate: finalValues.saleEndDate || "",
+        brand: brandValue || "",
+        sku: finalValues.sku || "",
+        weight: finalValues.weight || 0.01,
+        colors: finalValues.colors.filter(c => c.color.trim() !== ""),
+        sizes: finalValues.sizes.filter(s => s.size.trim() !== "" && s.price > 0 && s.quantity > 0),
+        product_specs: finalValues.product_specs?.filter(spec => spec.name.trim() !== "" && spec.value.trim() !== "") || [],
+        variant_specs: finalValues.variant_specs?.filter(spec => spec.name.trim() !== "" && spec.value.trim() !== "") || [],
+        keywords: finalValues.keywords || [],
+        questions: finalValues.questions?.filter(q => q.question.trim() !== "" && q.answer.trim() !== "") || [],
+        shippingFeeMethod: finalValues.shippingFeeMethod || "ITEM",
+        freeShippingForAllCountries: finalValues.freeShippingForAllCountries || false,
+        freeShippingCountriesIds: finalValues.freeShippingCountriesIds || [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
       
       // Upserting product data
-      const response = await upsertProduct(
-        {
-          productId: data?.productId ? data.productId : v4(),
-          variantId: data?.variantId ? data.variantId : v4(),
-          name: values.name,
-          description: values.description,
-          variantName: values.variantName,
-          variantDescription: values.variantDescription || "",
-          images: values.images,
-          variantImage: values.variantImage[0].url,
-          categoryId: values.categoryId,
-          subCategoryId: values.subCategoryId,
-          offerTagId: values.offerTagId === "none" ? "" : (values.offerTagId || ""),
-          isSale: values.isSale,
-          saleEndDate: values.saleEndDate,
-          brand: brandValue,
-          sku: values.sku,
-          weight: values.weight,
-          colors: values.colors,
-          sizes: values.sizes,
-          product_specs: values.product_specs,
-          variant_specs: values.variant_specs,
-          keywords: values.keywords,
-          questions: values.questions,
-          shippingFeeMethod: values.shippingFeeMethod,
-          freeShippingForAllCountries: values.freeShippingForAllCountries,
-          freeShippingCountriesIds: values.freeShippingCountriesIds || [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        storeUrl
-      );
+      const response = await upsertProduct(productData, storeUrl);
 
       // Displaying success message
       toast({
         title:
           data?.productId && data?.variantId
             ? "Product has been updated."
-            : `Congratulations! product is now created.`,
+            : `Congratulations! Product has been created successfully.`,
       });
 
       // Redirect or Refresh data
@@ -328,10 +392,11 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       }
     } catch (error: any) {
       // Handling form submission errors
+      console.error("Product submission error:", error);
       toast({
         variant: "destructive",
-        title: "Oops!",
-        description: error.toString(),
+        title: "Failed to save product",
+        description: error.message || "An unexpected error occurred. Please try again.",
       });
     }
   };
@@ -353,15 +418,25 @@ const ProductDetails: FC<ProductDetailsProps> = ({
     setKeywords(keywords.filter((_, index) => index !== i));
   };
 
+  // Add a ref to track if component has mounted
+  const hasInitialized = useRef(false);
+
   // Whenever colors, sizes, keywords changes we update the form values
   useEffect(() => {
-    form.setValue("colors", colors);
-    form.setValue("sizes", sizes);
-    form.setValue("keywords", keywords);
-    form.setValue("product_specs", productSpecs);
-    form.setValue("variant_specs", variantSpecs);
-    form.setValue("questions", questions);
-  }, [colors, sizes, keywords, productSpecs, questions, variantSpecs, data]);
+    // Skip the first render to avoid setState during render
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      return;
+    }
+
+    // Update form values after component has initialized
+    form.setValue("colors", colors, { shouldDirty: false, shouldTouch: false });
+    form.setValue("sizes", sizes, { shouldDirty: false, shouldTouch: false });
+    form.setValue("keywords", keywords, { shouldDirty: false, shouldTouch: false });
+    form.setValue("product_specs", productSpecs, { shouldDirty: false, shouldTouch: false });
+    form.setValue("variant_specs", variantSpecs, { shouldDirty: false, shouldTouch: false });
+    form.setValue("questions", questions, { shouldDirty: false, shouldTouch: false });
+  }, [colors, sizes, keywords, productSpecs, questions, variantSpecs, form]);
 
   //Countries options
   type CountryOption = {
@@ -581,13 +656,22 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                           <Select
                             disabled={isLoading || categories.length == 0}
                             onValueChange={(value) => {
-                              console.log("Category selected:", value);
                               field.onChange(value);
-                              // Force-set the value to ensure it gets captured
-                              form.setValue("categoryId", value);
+                              // Force update the form value to ensure it's captured
+                              form.setValue("categoryId", value, { 
+                                shouldValidate: true, 
+                                shouldDirty: true,
+                                shouldTouch: true 
+                              });
+                              // Clear subcategory when category changes
+                              form.setValue("subCategoryId", "", { 
+                                shouldValidate: true, 
+                                shouldDirty: true,
+                                shouldTouch: true 
+                              });
                             }}
-                            value={field.value}
-                            defaultValue={field.value}
+                            value={field.value || ""}
+                            defaultValue={field.value || ""}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -623,22 +707,32 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                             disabled={
                               isLoading ||
                               categories.length == 0 ||
-                              !form.getValues().categoryId
+                              !form.getValues().categoryId ||
+                              subCategories.length === 0
                             }
                             onValueChange={(value) => {
-                              console.log("Subcategory selected:", value);
                               field.onChange(value);
-                              // Force-set the value to ensure it gets captured
-                              form.setValue("subCategoryId", value);
+                              // Force update the form value to ensure it's captured
+                              form.setValue("subCategoryId", value, { 
+                                shouldValidate: true, 
+                                shouldDirty: true,
+                                shouldTouch: true 
+                              });
                             }}
-                            value={field.value}
-                            defaultValue={field.value}
+                            value={field.value || ""}
+                            defaultValue={field.value || ""}
                           >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue
                                   defaultValue={field.value}
-                                  placeholder="Select a sub-category"
+                                  placeholder={
+                                    !form.getValues().categoryId 
+                                      ? "Select a category first"
+                                      : subCategories.length === 0
+                                      ? "Loading subcategories..."
+                                      : "Select a sub-category"
+                                  }
                                 />
                               </SelectTrigger>
                             </FormControl>
@@ -731,8 +825,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       <FormItem className="flex-1">
                         <FormControl>
                           <NumberInput
-                            defaultValue={field.value}
-                            onValueChange={field.onChange}
+                            defaultValue={field.value || 0.01}
+                            onValueChange={(value) => field.onChange(value || 0.01)}
                             placeholder="Product weight"
                             min={0.01}
                             step={0.01}
@@ -1152,14 +1246,95 @@ const ProductDetails: FC<ProductDetailsProps> = ({
               )}
               <Button 
                 type="submit" 
-                disabled={isLoading || (!isNewVariantPage && (!form.getValues().categoryId || !form.getValues().subCategoryId))}
+                disabled={isLoading}
+                className={`w-full ${
+                  (!isNewVariantPage && (!form.getValues().categoryId || !form.getValues().subCategoryId)) ||
+                  !form.getValues().images?.length ||
+                  form.getValues().images?.length < 3 ||
+                  !form.getValues().variantImage?.[0]?.url ||
+                  !form.getValues().colors?.length ||
+                  !form.getValues().sizes?.length
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : ''
+                }`}
               >
                 {isLoading
-                  ? "loading..."
+                  ? "Creating Product..."
                   : data?.productId && data.variantId
-                  ? "Save product information"
-                  : "Create product"}
+                  ? "Update Product"
+                  : "Create Product"}
               </Button>
+              
+              {/* Validation Summary */}
+              {!isLoading && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Product Creation Checklist:</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().name ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().name ? '✓' : '✗'} Product Name
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().variantName ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().variantName ? '✓' : '✗'} Variant Name
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().description && form.getValues().description.length >= 200 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().description && form.getValues().description.length >= 200 ? '✓' : '✗'} Description (min 200 chars)
+                    </div>
+                    {!isNewVariantPage && (
+                      <>
+                        <div className={`flex items-center gap-2 ${
+                          form.getValues().categoryId ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {form.getValues().categoryId ? '✓' : '✗'} Category Selected
+                        </div>
+                        <div className={`flex items-center gap-2 ${
+                          form.getValues().subCategoryId ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {form.getValues().subCategoryId ? '✓' : '✗'} Subcategory Selected
+                        </div>
+                      </>
+                    )}
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().brand ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().brand ? '✓' : '✗'} Brand
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().sku ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().sku ? '✓' : '✗'} SKU
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().images && form.getValues().images.length >= 3 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().images && form.getValues().images.length >= 3 ? '✓' : '✗'} 
+                      Product Images ({form.getValues().images?.length || 0}/3 minimum)
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().variantImage?.[0]?.url ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().variantImage?.[0]?.url ? '✓' : '✗'} Variant Image
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().colors && form.getValues().colors.length > 0 && form.getValues().colors.every(c => c.color.trim() !== '') ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().colors && form.getValues().colors.length > 0 && form.getValues().colors.every(c => c.color.trim() !== '') ? '✓' : '✗'} 
+                      Colors ({form.getValues().colors?.filter(c => c.color.trim() !== '').length || 0} added)
+                    </div>
+                    <div className={`flex items-center gap-2 ${
+                      form.getValues().sizes && form.getValues().sizes.length > 0 && form.getValues().sizes.every(s => s.size.trim() !== '' && s.price > 0 && s.quantity > 0) ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {form.getValues().sizes && form.getValues().sizes.length > 0 && form.getValues().sizes.every(s => s.size.trim() !== '' && s.price > 0 && s.quantity > 0) ? '✓' : '✗'} 
+                      Sizes ({form.getValues().sizes?.filter(s => s.size.trim() !== '' && s.price > 0 && s.quantity > 0).length || 0} valid)
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </Form>
         </CardContent>

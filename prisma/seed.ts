@@ -121,8 +121,6 @@ async function main() {
       }
     }
   });
-
-  console.log('Demo data seeded successfully!');
 }
 
 main()

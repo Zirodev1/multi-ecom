@@ -43,8 +43,6 @@ interface SidebarProps {
 const Sidebar: FC<SidebarProps> = async ({ isAdmin, isDemo, demoRole, stores }) => {
   const user = await currentUser();
   
-  // Debug: Log received stores
-  console.log("Sidebar received stores:", stores ? JSON.stringify(stores) : "No stores");
   
   return (
     <div className="w-[300px] border-r h-screen fixed top-0 left-0 z-20 bg-background flex flex-col">

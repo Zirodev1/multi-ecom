@@ -10,11 +10,11 @@ import { getProductVariant } from "@/queries/product";
 export default async function ProductVariantPage({
   params,
 }: {
-  params: { storeUrl: string; productId: string; variantId: string };
+  params: Promise<{ storeUrl: string; productId: string; variantId: string }>;
 }) {
   const categories = await getAllCategories();
   const offerTags = await getAllOfferTags();
-  const { productId, variantId, storeUrl } = params;
+  const { productId, variantId, storeUrl } = await params;
   const productDetails = await getProductVariant(productId, variantId);
   if (!productDetails) return;
   const newDetails = {

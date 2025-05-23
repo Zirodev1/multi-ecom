@@ -91,7 +91,6 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
   // Watch form values for changes
   useEffect(() => {
     const subscription = form.watch((value) => {
-      console.log("Form values updated:", value);
       setDebugValues(value);
       
       // Keep local state in sync
@@ -124,19 +123,11 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
     values: z.infer<typeof SubCategoryFormSchema>
   ) => {
     try {
-      // Debug form state
-      console.log("Form state:", form.getValues());
-      console.log("Form errors:", form.formState.errors);
-      console.log("Form values received in handleSubmit:", values);
-      
+
       // Get values from local state as fallback
       const name = values.name || formName;
       const url = values.url || formUrl;
       const categoryId = values.categoryId || formCategoryId;
-      
-      console.log("Using name:", name);
-      console.log("Using url:", url);
-      console.log("Using categoryId:", categoryId);
       
       if (!values.image || values.image.length === 0) {
         toast({
@@ -185,8 +176,6 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
         createdAt: data?.createdAt || new Date(),
         updatedAt: new Date(),
       };
-      
-      console.log("Subcategory data being submitted:", subcategoryData);
 
       // Upserting subcategory data
       const response = await upsertSubCategory(subcategoryData);
@@ -281,7 +270,6 @@ const SubCategoryDetails: FC<SubCategoryDetailsProps> = ({
                         {...field} 
                         value={field.value || formName}
                         onChange={(e) => {
-                          console.log("Name field changed:", e.target.value);
                           setFormName(e.target.value);
                           field.onChange(e);
                         }}

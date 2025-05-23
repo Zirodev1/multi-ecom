@@ -176,7 +176,11 @@ const ClickToAddInputs = <T extends Detail>({
                 type={typeof detail[property] === "number" ? "number" : "text"}
                 name={property}
                 placeholder={property}
-                value={detail[property] as string}
+                value={
+                  typeof detail[property] === "number" 
+                    ? (detail[property] as number) || "" 
+                    : (detail[property] as string) || ""
+                }
                 min={typeof detail[property] === "number" ? 0 : undefined}
                 step="0.01"
                 onChange={(e) =>
@@ -184,7 +188,7 @@ const ClickToAddInputs = <T extends Detail>({
                     index,
                     property,
                     e.target.type === "number"
-                      ? parseFloat(e.target.value)
+                      ? (e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
                       : e.target.value
                   )
                 }

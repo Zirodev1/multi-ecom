@@ -222,8 +222,6 @@ const ProductPageContainer: FC<Props> = ({
     };
   }, []);
 
-  console.log("stock", productToBeAddedToCart.stock);
-
   return (
     <div className="relative">
       <div className="w-full xl:flex xl:gap-4">

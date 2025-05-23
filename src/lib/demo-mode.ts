@@ -88,7 +88,5 @@ export function createDemoStore(sessionId: string) {
  * This could be run via a cron job or when server starts
  */
 export async function cleanupDemoData(db: any, maxAgeHours = 24) {
-  // We're not actually implementing this since we're not storing demo data
-  // in the database anymore
-  console.log("Demo cleanup not needed - demo data is isolated in memory");
+
 } 

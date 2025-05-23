@@ -47,11 +47,6 @@ export default function SidebarNavSeller({
   const storeUrlMatch = pathname.match(/\/dashboard\/seller\/stores\/([^\/]+)/);
   const activeStore = storeUrlMatch ? storeUrlMatch[1] : "";
   
-  console.log("Current pathname:", pathname);
-  console.log("Extracted store URL:", activeStore);
-  console.log("Is on specific store page:", !!isOnSpecificStore);
-  console.log("Is demo mode:", isDemoMode);
-  
   // Function to handle navigation
   const handleNavigation = (e: React.MouseEvent, linkPath: string) => {
     e.preventDefault();
@@ -64,7 +59,6 @@ export default function SidebarNavSeller({
         ? `/dashboard/seller/stores/${DEMO_STORE_URL}`
         : `/dashboard/seller/stores/${DEMO_STORE_URL}/${linkPath}`;
       
-      console.log("Demo mode - navigating to:", targetPath);
       router.push(targetPath);
       return;
     }

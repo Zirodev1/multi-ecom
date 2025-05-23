@@ -7,14 +7,17 @@ import { getAllCategories } from "@/queries/category";
 import { getAllOfferTags } from "@/queries/offer-tag";
 import { getProductMainInfo } from "@/queries/product";
 
-export default async function SellerNewProductVariantPage({
-  params,
-}: {
-  params: { storeUrl: string; productId: string };
-}) {
+interface PageProps {
+  params: Promise<{ storeUrl: string; productId: string }>;
+}
+
+export default async function SellerNewProductVariantPage({ params }: PageProps) {
+  // Properly await params in Next.js 15
+  const { storeUrl, productId } = await params;
+  
   const categories = await getAllCategories();
   const offerTags = await getAllOfferTags();
-  const product = await getProductMainInfo(params.productId);
+  const product = await getProductMainInfo(productId);
   if (!product) return null;
   const countries = await db.country.findMany({
     orderBy: {
@@ -25,7 +28,7 @@ export default async function SellerNewProductVariantPage({
     <div>
       <ProductDetails
         categories={categories}
-        storeUrl={params.storeUrl}
+        storeUrl={storeUrl}
         data={product}
         offerTags={offerTags}
         countries={countries}

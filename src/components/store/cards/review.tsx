@@ -10,7 +10,6 @@ export default function ReviewCard({
 }: {
   review: ReviewWithImageType;
 }) {
-  console.log(review);
   const { images, user } = review;
   const colors = review.color
     .split(",")

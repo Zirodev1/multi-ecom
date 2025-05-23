@@ -5,13 +5,13 @@ import { getAllOfferTags } from "@/queries/offer-tag";
 import { notFound } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 
-export default async function SellerNewProductPage({
-  params,
-}: {
-  params: { storeUrl: string };
-}) {
-  // Make sure we await the params to avoid "params.storeUrl" sync error
-  const storeUrl = await Promise.resolve(params.storeUrl);
+interface PageProps {
+  params: Promise<{ storeUrl: string }>;
+}
+
+export default async function SellerNewProductPage({ params }: PageProps) {
+  // Properly await params in Next.js 15
+  const { storeUrl } = await params;
   
   // Check authentication
   let userId;

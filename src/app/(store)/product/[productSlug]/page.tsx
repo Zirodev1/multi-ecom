@@ -18,19 +18,23 @@ export default async function ProductPage({
   params,
   searchParams,
 }: {
-  params: { productSlug: string };
-  searchParams: { variant: string };
+  params: Promise<{ productSlug: string }>;
+  searchParams: Promise<{ variant: string }>;
 }) {
-  const data = await retrieveProductDetailsOptimized(params.productSlug);
-  const variant = data.variants.find((v) => v.slug === searchParams.variant);
+  // Await params and searchParams first
+  const { productSlug } = await params;
+  const { variant } = await searchParams;
+  
+  const data = await retrieveProductDetailsOptimized(productSlug);
+  const variantData = data.variants.find((v) => v.slug === variant);
   const specs = {
     product: data.specs,
-    variant: variant?.specs,
+    variant: variantData?.specs,
   };
 
   // Get cookies from the store
-  const cookieStore = cookies();
-  const userCountryCookie = await cookieStore.get("userCountry");
+  const cookieStore = await cookies();
+  const userCountryCookie = cookieStore.get("userCountry");
 
   // Set default country if cookie is missing
   let userCountry: Country = {
@@ -61,7 +65,7 @@ export default async function ProductPage({
       <div className="p-4 2xl:px-28 overflow-x-hidden mx-auto">
         <ProductPageContainer
           productData={data}
-          variantSlug={searchParams.variant}
+          variantSlug={variant}
           userCountry={userCountry}
         >
           <>
@@ -85,7 +89,7 @@ export default async function ProductPage({
             <Separator className="mt-6" />
             {/* Product description */}
             <ProductDescription
-              text={[data.description, variant?.variantDescription || ""]}
+              text={[data.description, variantData?.variantDescription || ""]}
             />
           </>
           <Separator className="mt-6" />

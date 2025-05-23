@@ -11,7 +11,7 @@ export default async function StorePage({
   params,
   searchParams,
 }: {
-  params: { storeUrl: string };
+  params: Promise<{ storeUrl: string }>;
   searchParams: FiltersQueryType;
 }) {
   const { storeUrl = '' } = await params;
