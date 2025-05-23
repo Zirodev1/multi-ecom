@@ -5,11 +5,9 @@ import { redirect } from "next/navigation";
 // Clerk
 import { currentUser } from "@clerk/nextjs/server";
 
-// Header
-import Header from "@/components/dashboard/header/header";
-
-// Sidebar
+// Custom UI Components
 import Sidebar from "@/components/dashboard/sidebar/sidebar";
+import Header from "@/components/dashboard/header/header";
 
 // Demo Mode
 import { cookies } from "next/headers";
@@ -20,20 +18,20 @@ export default async function AdminDashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  // Check for demo user first
-  const cookieStore = await cookies();
-  const isDemoMode = cookieStore.get(DEMO_MODE_COOKIE)?.value === "true";
-  const demoRole = cookieStore.get(DEMO_ROLE_COOKIE)?.value;
+  // First check for real user authentication
+  const user = await currentUser();
   
-  // If demo user with admin role, allow access
-  if (isDemoMode && demoRole === "ADMIN") {
+  // If user is authenticated and has ADMIN role, show admin dashboard
+  if (user && user.privateMetadata.role === "ADMIN") {
+    console.log("Real admin user authenticated:", user.id);
+    
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex">
         {/* Sidebar */}
-        <Sidebar isAdmin isDemo demoRole="ADMIN" />
-        <div className="pl-[300px]">
+        <Sidebar isAdmin />
+        <div className="w-full pl-[300px]">
           {/* Header */}
-          <Header isDemo />
+          <Header />
           <main className="container mx-auto px-4 pt-[75px] pb-10">
             {children}
           </main>
@@ -42,21 +40,31 @@ export default async function AdminDashboardLayout({
     );
   }
   
-  // Block non admins from accessing the admin dashboard
-  const user = await currentUser();
-  if (!user || user.privateMetadata.role !== "ADMIN") redirect("/");
+  // Only proceed with demo mode if no real admin user is authenticated
+  const cookieStore = await cookies();
+  const isDemoMode = cookieStore.get(DEMO_MODE_COOKIE)?.value === "true";
+  const demoRole = cookieStore.get(DEMO_ROLE_COOKIE)?.value;
   
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar isAdmin />
-      <div className="pl-[300px]">
-        {/* Header */}
-        <Header />
-        <main className="container mx-auto px-4 pt-[75px] pb-10">
-          {children}
-        </main>
+  // If demo user with admin role, allow access
+  if (isDemoMode && demoRole === "ADMIN") {
+    console.log("Using demo mode for admin dashboard - no real admin authenticated");
+    
+    return (
+      <div className="min-h-screen bg-background flex">
+        {/* Sidebar */}
+        <Sidebar isAdmin isDemo demoRole="ADMIN" />
+        <div className="w-full pl-[300px]">
+          {/* Header */}
+          <Header isDemo />
+          <main className="w-full mx-auto mt-[75px] sm:px-4 md:px-6 py-4">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  
+  // If we reach here, user is not authenticated as admin - redirect to home
+  redirect("/");
+  return null;
 }

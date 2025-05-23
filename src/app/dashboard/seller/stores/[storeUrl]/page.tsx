@@ -106,7 +106,7 @@ export default async function SellerStorePage({ params }: { params: ParamsType }
     // Demo data
     const demoProductCount = 12;
     const demoOrderCount = 8;
-    const demoRevenue = "₹45,320";
+    const demoRevenue = "$45,320";
     
     return (
       <div className="p-6">
@@ -140,7 +140,7 @@ export default async function SellerStorePage({ params }: { params: ParamsType }
             title="Revenue (30 days)"
             value={demoRevenue}
             description="↑ 12% from last month"
-            icon={<div className="h-8 w-8 flex items-center justify-center text-2xl text-emerald-500">₹</div>}
+            icon={<div className="h-8 w-8 flex items-center justify-center text-2xl text-emerald-500">$</div>}
           />
         </div>
         
@@ -154,9 +154,9 @@ export default async function SellerStorePage({ params }: { params: ParamsType }
             </div>
             <div className="space-y-4">
               {[
-                { id: "ORD-1234", date: "2023-09-15", status: "Delivered", amount: "₹2,499" },
-                { id: "ORD-1235", date: "2023-09-14", status: "Shipped", amount: "₹1,850" },
-                { id: "ORD-1236", date: "2023-09-13", status: "Processing", amount: "₹3,200" }
+                { id: "ORD-1234", date: "2023-09-15", status: "Delivered", amount: "$2,499" },
+                { id: "ORD-1235", date: "2023-09-14", status: "Shipped", amount: "$1,850" },
+                { id: "ORD-1236", date: "2023-09-13", status: "Processing", amount: "$3,200" }
               ].map((order) => (
                 <div key={order.id} className="flex justify-between items-center p-3 border rounded-md">
                   <div>
@@ -181,9 +181,9 @@ export default async function SellerStorePage({ params }: { params: ParamsType }
             </div>
             <div className="space-y-4">
               {[
-                { name: "Premium Leather Wallet", sold: 24, revenue: "₹12,000" },
-                { name: "Vintage Watch Collection", sold: 18, revenue: "₹9,000" },
-                { name: "Handcrafted Wooden Bowl", sold: 15, revenue: "₹4,500" }
+                { name: "Premium Leather Wallet", sold: 24, revenue: "$12,000" },
+                { name: "Vintage Watch Collection", sold: 18, revenue: "$9,000" },
+                { name: "Handcrafted Wooden Bowl", sold: 15, revenue: "$4,500" }
               ].map((product, i) => (
                 <div key={i} className="flex justify-between items-center p-3 border rounded-md">
                   <div>

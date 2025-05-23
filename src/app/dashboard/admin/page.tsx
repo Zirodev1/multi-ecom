@@ -45,8 +45,8 @@ export default async function AdminDashboardPage() {
           />
           <DashboardCard 
             title="Platform Revenue"
-            value="₹142,845"
-            description="₹25,420 this month"
+            value="$142,845"
+            description="$25,420 this month"
             icon={<DollarSign className="h-8 w-8 text-emerald-500" />}
           />
         </div>
@@ -75,7 +75,7 @@ export default async function AdminDashboardPage() {
               {[
                 { action: "New store registered", store: "Tech Gadgets", time: "2 hours ago" },
                 { action: "Product reported", item: "Counterfeit Watch", time: "5 hours ago" },
-                { action: "Payout processed", store: "Fashion Outlet", amount: "₹15,200", time: "Yesterday" },
+                { action: "Payout processed", store: "Fashion Outlet", amount: "$15,200", time: "Yesterday" },
                 { action: "New category added", category: "Home Appliances", time: "Yesterday" },
                 { action: "User dispute resolved", case: "Order #12435", time: "2 days ago" }
               ].map((activity, i) => (

@@ -1,26 +1,35 @@
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 
-export const DEMO_SESSION_COOKIE = "demo_session_id";
-export const DEMO_MODE_COOKIE = "demo_mode";
-export const DEMO_ROLE_COOKIE = "demo_role";
+// Re-export client-safe constants
+export {
+  DEMO_SESSION_COOKIE,
+  DEMO_MODE_COOKIE,
+  DEMO_ROLE_COOKIE,
+  DEMO_STORE_URL,
+} from "./demo-mode-client";
 
+// Define server-side DemoRole type
 export type DemoRole = "ADMIN" | "SELLER" | null;
 
+// Export server-specific constants
+export const DEMO_STORE_ID = "demo-store-123456";
+export const DEMO_USER_ID = "demo-user-123456";
+
 /**
- * Check if the current request is from a demo user
+ * Check if the current request is from a demo user (server-side)
  */
 export async function isDemoUser() {
   const cookieStore = await cookies();
-  return cookieStore.has(DEMO_MODE_COOKIE) && cookieStore.get(DEMO_MODE_COOKIE)?.value === "true";
+  return cookieStore.has("demo_mode") && cookieStore.get("demo_mode")?.value === "true";
 }
 
 /**
- * Get the demo session ID or create a new one
+ * Get the demo session ID or create a new one (server-side)
  */
 export async function getDemoSessionId() {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get(DEMO_SESSION_COOKIE)?.value;
+  const sessionId = cookieStore.get("demo_session_id")?.value;
   
   if (sessionId) {
     return sessionId;
@@ -30,11 +39,11 @@ export async function getDemoSessionId() {
 }
 
 /**
- * Get the current demo role (ADMIN or SELLER)
+ * Get the current demo role (ADMIN or SELLER) - server-side
  */
 export async function getDemoRole(): Promise<DemoRole> {
   const cookieStore = await cookies();
-  const roleValue = cookieStore.get(DEMO_ROLE_COOKIE)?.value;
+  const roleValue = cookieStore.get("demo_role")?.value;
   
   if (roleValue === "ADMIN" || roleValue === "SELLER") {
     return roleValue;
@@ -42,11 +51,6 @@ export async function getDemoRole(): Promise<DemoRole> {
   
   return null;
 }
-
-// Demo store ID that will be used consistently for seller demo mode
-export const DEMO_STORE_ID = "demo-store-123456";
-export const DEMO_STORE_URL = "demo-store";
-export const DEMO_USER_ID = "demo-user-123456";
 
 /**
  * Creates a mock store object for demo mode
@@ -58,7 +62,7 @@ export function createDemoStore(sessionId: string) {
     description: "This is a demo store for testing purposes.",
     email: `demo-${sessionId.substring(0, 8)}@example.com`,
     phone: "555-123-4567",
-    url: DEMO_STORE_URL,
+    url: "demo-store",
     logo: "/assets/images/demo-store-logo.png",
     cover: "/assets/images/demo-store-cover.jpg",
     status: "ACTIVE",

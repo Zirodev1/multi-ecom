@@ -3,6 +3,7 @@
 // React, Next.js
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // UI Components
 import {
@@ -23,6 +24,7 @@ import { DashboardSidebarMenuInterface } from "@/lib/types";
 // Utils
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
+import { DEMO_STORE_URL, getClientDemoMode } from "@/lib/demo-mode-client";
 
 export default function SidebarNavSeller({
   menuLinks,
@@ -31,6 +33,12 @@ export default function SidebarNavSeller({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  
+  // Check for demo mode
+  useEffect(() => {
+    setIsDemoMode(getClientDemoMode());
+  }, []);
   
   // Check if we're already on a specific store page
   const isOnSpecificStore = pathname.match(/\/dashboard\/seller\/stores\/([^\/]+)$/);
@@ -42,15 +50,27 @@ export default function SidebarNavSeller({
   console.log("Current pathname:", pathname);
   console.log("Extracted store URL:", activeStore);
   console.log("Is on specific store page:", !!isOnSpecificStore);
+  console.log("Is demo mode:", isDemoMode);
   
   // Function to handle navigation
   const handleNavigation = (e: React.MouseEvent, linkPath: string) => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Special case for demo mode
+    if (isDemoMode) {
+      // In demo mode, always navigate to the demo store pages
+      const targetPath = linkPath === "" 
+        ? `/dashboard/seller/stores/${DEMO_STORE_URL}`
+        : `/dashboard/seller/stores/${DEMO_STORE_URL}/${linkPath}`;
+      
+      console.log("Demo mode - navigating to:", targetPath);
+      router.push(targetPath);
+      return;
+    }
+    
     // If we're on the stores listing page and no store is selected yet
     if (pathname === "/dashboard/seller/stores" && !activeStore) {
-      console.log("On stores listing page - cannot navigate to a specific tab without selecting a store first");
       toast({
         variant: "destructive",
         title: "No store selected",
@@ -65,10 +85,8 @@ export default function SidebarNavSeller({
         ? `/dashboard/seller/stores/${activeStore}`
         : `/dashboard/seller/stores/${activeStore}/${linkPath}`;
       
-      console.log("Navigating to:", targetPath);
       router.push(targetPath);
     } else {
-      console.log("No active store found, cannot navigate");
       toast({
         variant: "destructive",
         title: "Navigation error",
@@ -89,11 +107,12 @@ export default function SidebarNavSeller({
               const iconSearch = icons.find((icon) => icon.value === link.icon);
               if (iconSearch) icon = <iconSearch.path />;
               
-              // Check if this link is active
-              const isActive = activeStore && (
+              // Check if this link is active - handling both demo and regular modes
+              const targetStoreUrl = isDemoMode ? DEMO_STORE_URL : activeStore;
+              const isActive = targetStoreUrl && (
                 link.link === ""
-                  ? pathname === `/dashboard/seller/stores/${activeStore}`
-                  : pathname.startsWith(`/dashboard/seller/stores/${activeStore}/${link.link}`)
+                  ? pathname === `/dashboard/seller/stores/${targetStoreUrl}`
+                  : pathname.startsWith(`/dashboard/seller/stores/${targetStoreUrl}/${link.link}`)
               );
                 
               return (
