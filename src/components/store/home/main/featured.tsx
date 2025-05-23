@@ -50,7 +50,7 @@ export default function Featured({ products }: { products: SimpleProduct[] }) {
               style={{ backgroundImage: "url(/assets/images/ads/coupon.gif)" }}
             >
               <h3 className="text-[20px] leading-6 mt-[11px] mb-1 text-white w-full">
-                use &#39;MHAJJI&#39;
+                use &#39;JKIALL&#39;
               </h3>
 
               <p className="overflow-hidden overflow-ellipsis w-full text-xs -translate-y-1">
