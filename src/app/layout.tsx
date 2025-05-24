@@ -16,6 +16,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import ModalProvider from "@/providers/modal-provider";
 
+// Analytics
+import { Analytics } from "@vercel/analytics/next";
+
 // Fonts
 const interFont = Inter({ subsets: ["latin"] });
 const barlowFont = Barlow({
@@ -48,6 +51,7 @@ export default function RootLayout({
           <ModalProvider>{children}</ModalProvider>
           <Toaster />
           <SonnerToaster position="bottom-left" />
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>

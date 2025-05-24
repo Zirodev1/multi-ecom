@@ -52,6 +52,7 @@
     "@types/react-tag-input": "^6.6.6",
     "@types/uuid": "^9.0.8",
     "@uidotdev/usehooks": "^2.4.1",
+    "@vercel/analytics": "^1.5.0",
     "@vercel/functions": "^2.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
